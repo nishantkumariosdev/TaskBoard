@@ -28,21 +28,25 @@ struct BoardView: View {
             }
         }
         .task {
-            viewModel.onAppear()
+            await viewModel.start()
         }
     }
     
     private var boardLayout: some View {
-        GeometryReader { proxy in
-            Group {
-                verticalBoard
-            }
-        }
-        .overlay { emptyStateOverlay }
+        verticalBoard
+            .overlay { emptyStateOverlay }
     }
     
     private var verticalBoard: some View {
-        BoardListView(columns: viewModel.columns, collapsedStatuses: viewModel.collapsedStatuses, onToggleCollapse: {_ in }, onEdit: {_ in }, onDelete: {_ in }, onMove: {_,_ in }, onAdd: {_ in })
+        BoardListView(
+            columns: viewModel.columns,
+            collapsedStatuses: viewModel.collapsedStatuses,
+            onToggleCollapse: { viewModel.toggleCollapse($0) },
+            onEdit: { editorMode = .edit(task: $0) },
+            onDelete: {_ in },
+            onMove: {_,_ in },
+            onAdd: { editorMode = .create(status: $0) }
+        )
     }
     
     @ViewBuilder

@@ -24,7 +24,7 @@ struct TaskEditorView: View {
                 }
                 
                 Section("Description") {
-                    TextField("Add any details (optional)", text: $viewModel.description, axis: .vertical)
+                    TextField("Add any details (optional)", text: $viewModel.details, axis: .vertical)
                         .lineLimit(3...8)
                 }
                 
@@ -37,6 +37,19 @@ struct TaskEditorView: View {
                     }
                     .pickerStyle(.inline)
                     .labelsHidden()
+                }
+                
+                if let createdAt = viewModel.createdAt {
+                    Section("Created") {
+                        Text(AbsoluteTime.string(from: createdAt))
+                            .foregroundStyle(.secondary)
+                    }
+                    if let updatedAt = viewModel.updatedAt, viewModel.hasBeenEdited {
+                        Section("Last Updated") {
+                            Text(AbsoluteTime.string(from: updatedAt))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
             .navigationTitle(viewModel.screenTitle)

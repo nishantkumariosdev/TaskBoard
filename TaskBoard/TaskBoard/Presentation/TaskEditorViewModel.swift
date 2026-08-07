@@ -29,7 +29,7 @@ final class TaskEditorViewModel {
     }
     
     var title: String
-    var description: String
+    var details: String
     var status: TaskStatus
     
     let mode: Mode
@@ -47,22 +47,57 @@ final class TaskEditorViewModel {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
-    init(mode: Mode) {
+    var createdAt: Date? {
+        if case .edit(let task) = mode {
+            return task.createdAt
+        }
+        return nil
+    }
+    
+    var updatedAt: Date? {
+        if case .edit(let task) = mode {
+            return task.updatedAt
+        }
+        return nil
+    }
+    
+    var hasBeenEdited: Bool {
+        if case .edit(let task) = mode {
+            return task.hasBeenEdited
+        }
+        return false
+    }
+    
+    private let createTask: CreateTaskUseCase
+    
+    init(mode: Mode, createTask: CreateTaskUseCase) {
         self.mode = mode
+        self.createTask = createTask
         
         switch mode {
         case .create(let status):
             self.title = ""
-            self.description = ""
+            self.details = ""
             self.status = status
         case .edit(let task):
             self.title = task.title
-            self.description = task.description
+            self.details = task.details
             self.status = task.status
         }
     }
     
     func save() -> Bool {
-        return true
+        do {
+            switch mode {
+            case .create:
+                try createTask.execute(title: title, details: details, status: status)
+            case .edit:
+                print("a")
+                
+            }
+            return true
+        } catch {
+            return false
+        }
     }
 }

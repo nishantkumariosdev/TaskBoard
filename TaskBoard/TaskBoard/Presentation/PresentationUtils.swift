@@ -49,3 +49,9 @@ enum RelativeTime {
         return formatter.localizedString(for: date, relativeTo: now)
     }
 }
+
+enum AbsoluteTime {
+    static func string(from date: Date) -> String {
+        date.formatted(date: .abbreviated, time: .shortened)
+    }
+}

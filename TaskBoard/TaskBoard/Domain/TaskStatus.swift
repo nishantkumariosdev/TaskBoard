@@ -13,4 +13,12 @@ enum TaskStatus: String, CaseIterable, Identifiable {
     case done
     
     var id: String { rawValue }
+    
+    var sortOrder: Int {
+        switch self {
+        case .todo: return 0
+        case .inProgress: return 1
+        case .done: return 2
+        }
+    }
 }

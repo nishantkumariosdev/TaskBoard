@@ -59,8 +59,8 @@ struct TaskCardView: View {
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
-            if !task.description.isEmpty {
-                Text(task.description)
+            if !task.details.isEmpty {
+                Text(task.details)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -68,11 +68,11 @@ struct TaskCardView: View {
             }
             
             HStack(spacing: 6) {
-                Image(systemName: "clock")
+                Image(systemName: timestampSymbol)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 
-                Text(RelativeTime.string(from: task.updatedAt))
+                Text(timestampLabel)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 
@@ -85,13 +85,21 @@ struct TaskCardView: View {
     private var borderColor: Color {
         Color(.separator).opacity(0.6)
     }
+    
+    private var timestampSymbol: String {
+        task.hasBeenEdited ? "clock.arror.circlepath" : "calendar"
+    }
+    
+    private var timestampLabel: String {
+        task.hasBeenEdited ? "Updated \(RelativeTime.string(from: task.updatedAt))" : "Created \(RelativeTime.string(from: task.createdAt))"
+    }
 }
 
 #Preview {
     VStack(spacing: 12) {
-        TaskCardView(task: BoardTask(id: "1", title: "Hello", description: "This is task 1", status: .inProgress, createdAt: .now, updatedAt: .now.addingTimeInterval(-600)), onEdit: {}, onDelete: {}, onMove: {_ in})
+        TaskCardView(task: BoardTask(id: "1", title: "Hello", details: "This is task 1", status: .inProgress, createdAt: .now, updatedAt: .now.addingTimeInterval(-600), orderIndex: 0), onEdit: {}, onDelete: {}, onMove: {_ in})
         
-        TaskCardView(task: BoardTask(id: "2", title: "Hi", description: "This is task 1", status: .done, createdAt: .now, updatedAt: .now.addingTimeInterval(-600)), onEdit: {}, onDelete: {}, onMove: {_ in})
+        TaskCardView(task: BoardTask(id: "2", title: "Hi", details: "This is task 1", status: .done, createdAt: .now, updatedAt: .now.addingTimeInterval(-600), orderIndex: 1), onEdit: {}, onDelete: {}, onMove: {_ in})
     }
     .padding()
     .background(Color(.systemGroupedBackground))
