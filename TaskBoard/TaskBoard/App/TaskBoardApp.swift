@@ -14,7 +14,7 @@ struct TaskBoardApp: App {
 
     var body: some Scene {
         WindowGroup {
-            BoardView(viewModel: dependencies.makeBoardViewModel())
+            BoardView(viewModel: dependencies.makeBoardViewModel(), editorFactory: dependencies)
         }
     }
 }
