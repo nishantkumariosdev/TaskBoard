@@ -111,7 +111,10 @@ private enum ColumnOrdering {
         var tasks = column
         tasks.insert(task, at: max(0, min(slot, tasks.count)))
         
-        return tasks.enumerated().map { index, existing in
+        return tasks.enumerated().compactMap { index, existing in
+            guard existing.id == task.id || existing.orderIndex != index else {
+                return nil
+            }
             var copy = existing
             copy.orderIndex = index
             return copy.touched(at: date)

@@ -30,6 +30,7 @@ enum TaskEntityMapper {
         entity.details = task.details
         entity.statusRaw = task.status.rawValue
         entity.updatedAt = task.updatedAt
+        entity.orderIndex = task.orderIndex
         entity.syncStateRaw = task.syncState.rawValue
     }
 }
