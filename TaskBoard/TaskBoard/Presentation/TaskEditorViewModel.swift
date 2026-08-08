@@ -69,10 +69,14 @@ final class TaskEditorViewModel {
     }
     
     private let createTask: CreateTaskUseCase
+    private let updateTask: UpdateTaskUseCase
+    private let moveTask: MoveTaskUseCase
     
-    init(mode: Mode, createTask: CreateTaskUseCase) {
+    init(mode: Mode, createTask: CreateTaskUseCase, updateTask: UpdateTaskUseCase, moveTask: MoveTaskUseCase) {
         self.mode = mode
         self.createTask = createTask
+        self.updateTask = updateTask
+        self.moveTask = moveTask
         
         switch mode {
         case .create(let status):
@@ -91,9 +95,12 @@ final class TaskEditorViewModel {
             switch mode {
             case .create:
                 try createTask.execute(title: title, details: details, status: status)
-            case .edit:
-                print("a")
+            case .edit(let task):
+                try updateTask.execute(id: task.id, title: title, details: details)
                 
+                if status != task.status {
+                    try moveTask.execute(id: task.id, to: status, position: 0)
+                }
             }
             return true
         } catch {

@@ -34,12 +34,14 @@ final class BoardViewModel {
     
     private let observeTasks: ObserveTasksUseCase
     private let loadBoard: LoadBoardUseCase
-    private let createTask: CreateTaskUseCase
+    private let deleteTask: DeleteTaskUseCase
+    private let moveTask: MoveTaskUseCase
     
-    init(observeTasks: ObserveTasksUseCase, loadBoard: LoadBoardUseCase, createTask: CreateTaskUseCase) {
+    init(observeTasks: ObserveTasksUseCase, loadBoard: LoadBoardUseCase, deleteTask: DeleteTaskUseCase, moveTask: MoveTaskUseCase) {
         self.observeTasks = observeTasks
         self.loadBoard = loadBoard
-        self.createTask = createTask
+        self.deleteTask = deleteTask
+        self.moveTask = moveTask
     }
     
     func start() async {
@@ -48,6 +50,38 @@ final class BoardViewModel {
         for await tasks in observeTasks.execute() {
             apply(tasks)
         }
+    }
+    
+    func delete(id: String) {
+        do {
+            try self.deleteTask.execute(id: id)
+        } catch {
+            print("\(message(for: error))")
+        }
+    }
+    
+    func move(id: String, to status: TaskStatus, position: Int?) {
+        do {
+            try self.moveTask.execute(id: id, to: status, position: position)
+        } catch {
+            print("\(message(for: error))")
+        }
+    }
+    
+    func handleDrop(taskId: String, into status: TaskStatus, at visibleIndex: Int) {
+        guard let task = task(withId: taskId) else {
+            print("\(BoardError.taskNotFound(id: taskId).localizedDescription))")
+            return
+        }
+        
+        var position = visibleIndex
+        if task.status == status, let currentIndex = tasks(in: status).firstIndex(where: { $0.id == taskId }) {
+            if currentIndex == visibleIndex || currentIndex == visibleIndex - 1 { return }
+            if currentIndex < visibleIndex {
+                position -= 1
+            }
+        }
+        move(id: taskId, to: status, position: position)
     }
     
     func toggleCollapse(_ status: TaskStatus) {
@@ -65,8 +99,16 @@ final class BoardViewModel {
             try loadBoard.execute()
             loadState = .ready
         } catch {
-            loadState = .failed(message: (error as? BoardError)?.localizedDescription ?? error.localizedDescription)
+            loadState = .failed(message: message(for: error))
         }
+    }
+    
+    private func task(withId id: String) -> BoardTask? {
+        columns.lazy.flatMap(\.tasks).first { $0.id == id }
+    }
+    
+    private func tasks(in status: TaskStatus) -> [BoardTask] {
+        columns.first { $0.status == status }?.tasks ?? []
     }
     
     private func apply(_ tasks: [BoardTask]) {
@@ -80,5 +122,9 @@ final class BoardViewModel {
         }
         
         if case .failed = loadState { loadState = .ready }
+    }
+    
+    private func message(for error: Error) -> String {
+        (error as? BoardError)?.localizedDescription ?? error.localizedDescription
     }
 }

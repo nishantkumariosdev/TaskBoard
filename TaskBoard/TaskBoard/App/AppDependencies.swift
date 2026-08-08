@@ -33,12 +33,24 @@ final class AppDependencies: TaskEditorViewModelFactory {
         DefaultCreateTaskUseCase(repository: repository)
     }
     
+    private var updateTaskUseCase: UpdateTaskUseCase {
+        DefaultUpdateTaskUseCase(repository: repository)
+    }
+    
+    private var deleteTaskUseCase: DeleteTaskUseCase {
+        DefaultDeleteTaskUseCase(repository: repository)
+    }
+    
+    private var moveTaskUseCasse: MoveTaskUseCase {
+        DefaultMoveTaskUseCase(repository: repository)
+    }
+    
     func makeBoardViewModel() -> BoardViewModel {
-        let viewModel = BoardViewModel(observeTasks: observerTasksUseCase, loadBoard: loadBoardUsecase, createTask: createTaskUseCase)
+        let viewModel = BoardViewModel(observeTasks: observerTasksUseCase, loadBoard: loadBoardUsecase, deleteTask: deleteTaskUseCase, moveTask: moveTaskUseCasse)
         return viewModel
     }
     
     func makeEditorViewModel(mode: TaskEditorViewModel.Mode) -> TaskEditorViewModel {
-        TaskEditorViewModel(mode: mode, createTask: createTaskUseCase)
+        TaskEditorViewModel(mode: mode, createTask: createTaskUseCase, updateTask: updateTaskUseCase, moveTask: moveTaskUseCasse)
     }
 }

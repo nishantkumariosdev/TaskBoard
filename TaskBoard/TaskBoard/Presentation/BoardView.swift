@@ -13,6 +13,7 @@ struct BoardView: View {
     
     let editorFactory: any TaskEditorViewModelFactory
     @State private var editorMode: TaskEditorViewModel.Mode?
+    @State private var pendingDeletion: BoardTask?
     
     var body: some View {
         NavigationStack {
@@ -25,6 +26,17 @@ struct BoardView: View {
             .navigationBarTitleDisplayMode(.inline)
             .sheet(item: $editorMode) { mode in
                 TaskEditorView(viewModel: editorFactory.makeEditorViewModel(mode: mode))
+            }
+            .confirmationDialog("Delete this task", isPresented: deletionBinding, titleVisibility: .visible, presenting: pendingDeletion) { task in
+                Button("Delete", role: .destructive) {
+                    viewModel.delete(id: task.id)
+                    pendingDeletion = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingDeletion = nil
+                }
+            } message: { task in
+                Text("\"\(task.title)\" will be removed from task board")
             }
         }
         .task {
@@ -43,9 +55,14 @@ struct BoardView: View {
             collapsedStatuses: viewModel.collapsedStatuses,
             onToggleCollapse: { viewModel.toggleCollapse($0) },
             onEdit: { editorMode = .edit(task: $0) },
-            onDelete: {_ in },
-            onMove: {_,_ in },
-            onAdd: { editorMode = .create(status: $0) }
+            onDelete: { pendingDeletion = $0 },
+            onMove: { task, status in
+                viewModel.move(id: task.id, to: status, position: 0)
+            },
+            onAdd: { editorMode = .create(status: $0) },
+            onDropTask: { taskId, status, index in
+                viewModel.handleDrop(taskId: taskId, into: status, at: index)
+            }
         )
     }
     
@@ -76,6 +93,13 @@ struct BoardView: View {
             .padding(.trailing, 20)
             .padding(.bottom, 25)
         }
+    }
+    
+    private var deletionBinding: Binding<Bool> {
+        Binding(
+            get: { pendingDeletion != nil },
+            set: { if !$0 { pendingDeletion = nil } }
+        )
     }
 }
 

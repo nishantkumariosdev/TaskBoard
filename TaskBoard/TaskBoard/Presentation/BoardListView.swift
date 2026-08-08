@@ -17,6 +17,13 @@ struct BoardListView: View {
     let onDelete: (BoardTask) -> Void
     let onMove: (BoardTask, TaskStatus) -> Void
     let onAdd: (TaskStatus) -> Void
+    let onDropTask: (_ taskId: String, _ status: TaskStatus, _ visibleIndex: Int) -> Void
+    
+    private struct DropSlot: Equatable {
+        let status: TaskStatus
+        let index: Int
+    }
+    @State private var targetedSlot: DropSlot?
     
     var body: some View {
         ScrollView(.vertical) {
@@ -106,14 +113,72 @@ struct BoardListView: View {
                         }
                 }
                 .dropDestination(for: String.self) { items, _ in
-                    true
+                    handleDrop(items, into: column.status, at: index)
                 } isTargeted: { targeted in
-                    
+                    updateTarget(targeted, to: DropSlot(status: column.status, index: index))
                 }
             }
+            
+            trailingDropZone(for: column)
         }
         .padding(.horizontal, 16)
         .padding(.top, 12)
         .padding(.bottom, 4)
+    }
+    
+    private func trailingDropZone(for column: BoardViewModel.Column) -> some View {
+        let slot = DropSlot(status: column.status, index: column.tasks.count)
+        let isTargeted = targetedSlot == slot
+        
+        return Group {
+            if column.tasks.isEmpty {
+                Text(column.status.emptyMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(
+                                column.status.tint.opacity(isTargeted ? 0.7 : 0.2),
+                                style: StrokeStyle(lineWidth: 1.5, dash: [5])
+                            )
+                    )
+            } else {
+                VStack(spacing: 0) {
+                    insertionIndicator(tint: column.status.tint, visible: isTargeted)
+                    Color.clear.frame(height: 20)
+                }
+            }
+        }
+        .contentShape(Rectangle())
+        .dropDestination(for: String.self) { items, _ in
+            handleDrop(items, into: column.status, at: column.tasks.count)
+        } isTargeted: { targeted in
+            updateTarget(targeted, to: slot)
+        }
+    }
+    
+    private func insertionIndicator(tint: Color, visible: Bool) -> some View {
+        Capsule()
+            .fill(tint)
+            .frame(height: 3)
+            .opacity(visible ? 1 : 0)
+            .animation(.easeInOut(duration: 0.12), value: visible)
+    }
+    
+    private func updateTarget(_ targeted: Bool, to slot: DropSlot) {
+        if targeted {
+            targetedSlot = slot
+        } else if targetedSlot == slot {
+            targetedSlot = nil
+        }
+    }
+    
+    private func handleDrop(_ items: [String], into status: TaskStatus, at index: Int) -> Bool {
+        targetedSlot = nil
+        guard let id = items.first else { return false }
+        onDropTask(id, status, index)
+        return true
     }
 }

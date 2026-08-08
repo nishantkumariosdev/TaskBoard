@@ -87,7 +87,7 @@ struct TaskCardView: View {
     }
     
     private var timestampSymbol: String {
-        task.hasBeenEdited ? "clock.arror.circlepath" : "calendar"
+        task.hasBeenEdited ? "clock.arrow.circlepath" : "calendar"
     }
     
     private var timestampLabel: String {

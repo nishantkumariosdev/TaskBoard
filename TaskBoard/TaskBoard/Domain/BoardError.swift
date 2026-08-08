@@ -10,6 +10,7 @@ import Foundation
 enum BoardError: LocalizedError {
     case loadFailed(reason: String)
     case persistenceFailed(reason: String)
+    case taskNotFound(id: String)
     
     var errorDescription: String? {
         switch self {
@@ -17,6 +18,8 @@ enum BoardError: LocalizedError {
             return "Could not load your task board. \(reason)"
         case .persistenceFailed(let reason):
             return "Could not save your changes. \(reason)"
+        case .taskNotFound(let id):
+            return "Task does not exist: \(id)"
         }
     }
 }

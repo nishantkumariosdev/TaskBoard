@@ -32,6 +32,14 @@ extension TaskStatus {
         case .done: return .green
         }
     }
+    
+    var emptyMessage: String {
+        switch self {
+        case .todo: return "Nothing in To Do"
+        case .inProgress: return "Nothing InProgress"
+        case .done: return "Nothing completed"
+        }
+    }
 }
 
 enum RelativeTime {
