@@ -10,32 +10,22 @@ import SwiftData
 
 struct LocalTaskStoreContainer {
     let modelContainer: ModelContainer
-    let degradationError: BoardError?
     
     static let schema = Schema([TaskEntity.self])
     
     static func forApp() -> LocalTaskStoreContainer {
         if let container = try? makeContainer(inMemory: false) {
-            return LocalTaskStoreContainer(modelContainer: container, degradationError: nil)
+            return LocalTaskStoreContainer(modelContainer: container)
         }
         AppLog.store("on disk store unavailable, falling back to memory, this session won't be saved")
         
         do {
-            return LocalTaskStoreContainer(
-                modelContainer: try makeContainer(inMemory: true),
-                degradationError: .persistenceFailed(reason: "Task board could not be opened on disk, so this session will not be saved")
-            )
+            return LocalTaskStoreContainer(modelContainer: try makeContainer(inMemory: true))
         } catch {
             fatalError("SwiftData is not usable: \(error)")
         }
     }
     
-    static func inMemory() throws -> LocalTaskStoreContainer {
-        return LocalTaskStoreContainer(
-            modelContainer: try makeContainer(inMemory: true),
-            degradationError: nil
-        )
-    }
     
     private static func makeContainer(inMemory: Bool) throws -> ModelContainer {
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory)

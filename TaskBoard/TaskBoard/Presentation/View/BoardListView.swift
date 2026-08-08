@@ -106,7 +106,7 @@ struct BoardListView: View {
     
     @ViewBuilder
     private func sectionBody(for column: BoardViewModel.Column) -> some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 0) {
             ForEach(Array(column.tasks.enumerated()), id: \.element.id) { index, task in
                 VStack(spacing: 10) {
                     insertionIndicator(
@@ -120,6 +120,8 @@ struct BoardListView: View {
                                 .frame(width: 200)
                         }
                 }
+                .padding(.top, 10)
+                .contentShape(Rectangle())
                 .dropDestination(for: String.self) { items, _ in
                     handleDrop(items, into: column.status, at: index)
                 } isTargeted: { targeted in
@@ -130,7 +132,7 @@ struct BoardListView: View {
             trailingDropZone(for: column)
         }
         .padding(.horizontal, 16)
-        .padding(.top, 12)
+        .padding(.top, 2)
         .padding(.bottom, 4)
     }
     

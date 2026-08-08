@@ -84,7 +84,6 @@ struct MessageBanner: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
-            .accessibilityLabel("Dismiss")
         }
         .padding(12)
         .background(
