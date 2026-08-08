@@ -18,7 +18,7 @@ struct BoardView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                LastSyncedView(lastSyncedAt: viewModel.lastSyncedAt)
+                SyncStatusView(status: viewModel.syncStatus)
                 
                 boardLayout
             }

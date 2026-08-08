@@ -15,9 +15,17 @@ protocol LocalTaskStore: AnyObject {
     
     func fetchAll() throws -> [BoardTask]
     
+    func fetchAllIncludingDeleted() throws -> [BoardTask]
+    
+    func fetchPending() throws -> [BoardTask]
+    
     func fetch(id: String) throws -> BoardTask?
     
     func upsert(_ tasks: [BoardTask]) throws
     
-    func delete(ids: [String]) throws
+    func markPendingDelete(id: String) throws
+
+    func markSynced(id: String) throws
+
+    func hardDelete(ids: [String]) throws
 }

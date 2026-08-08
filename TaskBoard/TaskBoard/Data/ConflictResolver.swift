@@ -9,12 +9,13 @@ import Foundation
 
 enum ConflictResolution: Equatable {
     case keepLocal
-    case takeRemote
+    case takeServer
 }
 
 enum ConflictResolver {
 
-    static func resolve(local: BoardTask, remote: BoardTask) -> ConflictResolution {
-        remote.updatedAt > local.updatedAt ? .takeRemote : .keepLocal
+    static func resolve(local: BoardTask, server: BoardTask) -> ConflictResolution {
+        guard !local.syncState.isPending else { return .keepLocal }
+        return server.updatedAt > local.updatedAt ? .takeServer : .keepLocal
     }
 }

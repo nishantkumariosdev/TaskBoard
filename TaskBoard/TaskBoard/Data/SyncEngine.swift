@@ -16,43 +16,72 @@ final class SyncEngine {
         self.store = store
         self.remote = remote
     }
-
-    func push(_ task: BoardTask) async -> Bool {
-        do {
-            try await remote.upsert(task)
-            return true
-        } catch {
-            return false
-        }
+    
+    func pendingCount() -> Int {
+        (try? store.fetchPending().count) ?? 0
+    }
+    
+    func observerLocalChanges() -> AsyncStream<[BoardTask]> {
+        store.observe()
+    }
+    
+    func sync() async -> Bool {
+        let pushed = await push()
+        let pulled = await pull()
+        return pushed && pulled
     }
 
-    func pushDelete(id: String) async -> Bool {
-        do {
-            try await remote.delete(id: id)
-            return true
-        } catch {
-            return false
+    private func push() async -> Bool {
+        guard let pending = try? store.fetchPending(), !pending.isEmpty else { return true }
+
+        var allSucceeded = true
+        for task in pending {
+            do {
+                if task.syncState == .pendingDelete {
+                    try await remote.delete(id: task.id)
+                } else {
+                    try await remote.upsert(task)
+                    try store.markSynced(id: task.id)
+                }
+            } catch {
+                allSucceeded = false
+                continue
+            }
+            
+            do {
+                if task.syncState == .pendingDelete {
+                    try store.hardDelete(ids: [task.id])
+                } else {
+                    try store.markSynced(id: task.id)
+                }
+            } catch {
+                allSucceeded = false
+            }
         }
+
+        return allSucceeded
     }
 
-    func pull() async -> Bool {
+    private func pull() async -> Bool {
         do {
-            let remoteTasks = try await remote.fetchAll()
-            let locals = try store.fetchAll()
+            let serverTasks = try await remote.fetchAll()
+            let locals = try store.fetchAllIncludingDeleted()
             let localsByID = Dictionary(locals.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
 
-            let incoming = remoteTasks.filter { remoteTask in
-                guard let local = localsByID[remoteTask.id] else { return true }
-                return ConflictResolver.resolve(local: local, remote: remoteTask) == .takeRemote
+            let incoming = serverTasks.filter { serverTask in
+                guard let local = localsByID[serverTask.id] else { return true }
+                return ConflictResolver.resolve(local: local, server: serverTask) == .takeServer
             }
             if !incoming.isEmpty {
-                try store.upsert(incoming)
+                try store.upsert(incoming.map { $0.markedSynced() })
             }
+            let serverIDs = Set(serverTasks.map(\.id))
+            let deletedElsewhere = locals
+                .filter { $0.syncState == .synced && !serverIDs.contains($0.id) }
+                .map(\.id)
 
-            let remoteIDs = Set(remoteTasks.map(\.id))
-            let deletedElsewhere = locals.map(\.id).filter { !remoteIDs.contains($0) }
             if !deletedElsewhere.isEmpty {
-                try store.delete(ids: deletedElsewhere)
+                try store.hardDelete(ids: deletedElsewhere)
             }
 
             return true

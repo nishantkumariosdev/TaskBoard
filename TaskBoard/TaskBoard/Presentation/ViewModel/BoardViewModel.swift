@@ -27,7 +27,7 @@ final class BoardViewModel {
         Column(status: $0, tasks: [])
     }
     private(set) var collapsedStatuses: Set<TaskStatus> = []
-    private(set) var lastSyncedAt: Date?
+    private(set) var syncStatus = SyncStatus()
     
     var isBoardEmpty: Bool {
         columns.allSatisfy(\.tasks.isEmpty)
@@ -57,15 +57,15 @@ final class BoardViewModel {
                 }
             }
             group.addTask { @MainActor [self] in
-                for await date in syncCoordinator.observeLastSynced() {
-                    lastSyncedAt = date
+                for await status in syncCoordinator.observeStatus() {
+                    syncStatus = status
                 }
             }
         }
     }
     
     func refresh() async {
-        await syncCoordinator.refresh()
+        await syncCoordinator.syncNow()
     }
     
     func delete(id: String) {

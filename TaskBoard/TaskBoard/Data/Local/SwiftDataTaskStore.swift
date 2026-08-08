@@ -39,12 +39,27 @@ final class SwiftDataTaskStore: LocalTaskStore {
     
     func fetchAll() throws -> [BoardTask] {
         try fetchEntities()
+            .filter { $0.syncStateRaw != SyncState.pendingDelete.rawValue }
             .map(TaskEntityMapper.toDomain)
             .sortedForBoard()
     }
     
+    func fetchAllIncludingDeleted() throws -> [BoardTask] {
+        try fetchEntities().map(TaskEntityMapper.toDomain)
+    }
+    
+    func fetchPending() throws -> [BoardTask] {
+        try fetchEntities()
+            .map(TaskEntityMapper.toDomain)
+            .filter(\.syncState.isPending)
+            .sorted { $0.updatedAt < $1.updatedAt }
+    }
+    
     func fetch(id: String) throws -> BoardTask? {
-        try entity(withId: id).map(TaskEntityMapper.toDomain)
+        guard let entity = try entity(withId: id),
+              entity.syncStateRaw != SyncState.pendingDelete.rawValue
+        else { return nil }
+        return TaskEntityMapper.toDomain(entity)
     }
     
     func upsert(_ tasks: [BoardTask]) throws {
@@ -71,9 +86,23 @@ final class SwiftDataTaskStore: LocalTaskStore {
         }
     }
     
-    func delete(ids: [String]) throws {
+    func markPendingDelete(id: String) throws {
+        guard let entity = try entity(withId: id) else {
+            throw BoardError.taskNotFound(id: id)
+        }
+        entity.syncStateRaw = SyncState.pendingDelete.rawValue
+        try commit()
+    }
+    
+    func markSynced(id: String) throws {
+        guard let entity = try entity(withId: id) else { return }
+        entity.syncStateRaw = SyncState.synced.rawValue
+        try commit()
+    }
+
+    func hardDelete(ids: [String]) throws {
         guard !ids.isEmpty else { return }
-        
+
         let targets = Set(ids)
         for entity in try fetchEntities() where targets.contains(entity.id) {
             context.delete(entity)
@@ -117,7 +146,9 @@ final class SwiftDataTaskStore: LocalTaskStore {
 extension Array where Element == BoardTask {
     func sortedForBoard() -> [BoardTask] {
         sorted {
-            $0.status.sortOrder < $1.status.sortOrder
+            $0.status.sortOrder == $1.status.sortOrder
+                ? $0.orderIndex < $1.orderIndex
+                : $0.status.sortOrder < $1.status.sortOrder
         }
     }
 }

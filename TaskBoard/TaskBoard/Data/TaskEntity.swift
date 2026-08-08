@@ -18,8 +18,9 @@ final class TaskEntity {
     var createdAt: Date
     var updatedAt: Date
     var orderIndex: Int
+    var syncStateRaw: String
     
-    init(id: String, title: String, details: String, statusRaw: String, createdAt: Date, updatedAt: Date, orderIndex: Int) {
+    init(id: String, title: String, details: String, statusRaw: String, createdAt: Date, updatedAt: Date, orderIndex: Int, syncStateRaw: String) {
         self.id = id
         self.title = title
         self.details = details
@@ -27,5 +28,6 @@ final class TaskEntity {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.orderIndex = orderIndex
+        self.syncStateRaw = syncStateRaw
     }
 }

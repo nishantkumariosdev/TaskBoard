@@ -10,13 +10,13 @@ import Foundation
 @MainActor
 final class LocalOnlySyncCoordinator: SyncCoordinating {
 
-    private var observers: [UUID: AsyncStream<Date?>.Continuation] = [:]
+    private var observers: [UUID: AsyncStream<SyncStatus>.Continuation] = [:]
 
-    func observeLastSynced() -> AsyncStream<Date?> {
+    func observeStatus() -> AsyncStream<SyncStatus> {
         AsyncStream { continuation in
             let id = UUID()
             observers[id] = continuation
-            continuation.yield(nil)
+            continuation.yield(.localOnly)
 
             continuation.onTermination = { [weak self] _ in
                 Task { @MainActor in self?.observers[id] = nil }
@@ -25,10 +25,6 @@ final class LocalOnlySyncCoordinator: SyncCoordinating {
     }
 
     func start() {}
-
-    func refresh() async {}
-
-    func push(_ task: BoardTask) {}
-
-    func pushDelete(id: String) {}
+    func syncNow() async {}
+    func requestSync() {}
 }

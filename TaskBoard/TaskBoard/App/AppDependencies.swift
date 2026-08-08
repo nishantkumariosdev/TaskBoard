@@ -28,11 +28,15 @@ final class AppDependencies: TaskEditorViewModelFactory {
                 client: URLSessionHTTPClient()
             )
             let engine = SyncEngine(store: store, remote: remote)
-            self.syncCoordinator = FirebaseSyncCoordinator(engine: engine)
+            self.syncCoordinator = FirebaseSyncCoordinator(engine: engine, network: NetworkMonitor())
         } else {
             self.syncCoordinator = LocalOnlySyncCoordinator()
         }
         repository.syncCoordinator = syncCoordinator
+    }
+    
+    func applicationBecameActive() {
+        Task { await syncCoordinator.syncNow() }
     }
     
     private var observerTasksUseCase: ObserveTasksUseCase {

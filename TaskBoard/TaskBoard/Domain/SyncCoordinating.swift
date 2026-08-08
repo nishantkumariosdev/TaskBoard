@@ -9,13 +9,11 @@ import Foundation
 
 @MainActor
 protocol SyncCoordinating: AnyObject {
-    func observeLastSynced() -> AsyncStream<Date?>
+    func observeStatus() -> AsyncStream<SyncStatus>
 
     func start()
 
-    func refresh() async
+    func syncNow() async
 
-    func push(_ task: BoardTask)
-
-    func pushDelete(id: String)
+    func requestSync()
 }

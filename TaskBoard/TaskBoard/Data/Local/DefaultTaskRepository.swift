@@ -33,20 +33,18 @@ final class DefaultTaskRepository: TaskRepository {
     }
     
     func save(_ task: BoardTask) throws {
-        try store.upsert([task])
-        syncCoordinator?.push(task)
+        try store.upsert([task.markedPending()])
+        syncCoordinator?.requestSync()
     }
     
     func saveAll(_ tasks: [BoardTask]) throws {
-        try store.upsert(tasks)
-        for task in tasks {
-            syncCoordinator?.push(task)
-        }
+        try store.upsert(tasks.map { $0.markedPending() })
+        syncCoordinator?.requestSync()
     }
     
     func delete(id: String) throws {
-        try store.delete(ids: [id])
-        syncCoordinator?.pushDelete(id: id)
+        try store.markPendingDelete(id: id)
+        syncCoordinator?.requestSync()
     }
     
     
