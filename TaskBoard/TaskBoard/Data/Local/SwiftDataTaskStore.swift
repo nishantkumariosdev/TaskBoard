@@ -138,6 +138,7 @@ final class SwiftDataTaskStore: LocalTaskStore {
             publish(try fetchAll())
         } catch {
             context.rollback()
+            AppLog.store("save failed, rolled back. \(error.localizedDescription)")
             throw BoardError.persistenceFailed(reason: error.localizedDescription)
         }
     }

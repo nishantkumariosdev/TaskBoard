@@ -25,6 +25,7 @@ struct URLSessionHTTPClient: HTTPClient {
             urlRequest.httpBody = body
             urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
+        let label = "\(request.method.rawValue) \(request.url.path)"
 
         do {
             let (data, response) = try await session.data(for: urlRequest)
@@ -35,11 +36,13 @@ struct URLSessionHTTPClient: HTTPClient {
             guard (200..<300).contains(http.statusCode) else {
                 throw BoardError.remoteFailed(reason: Self.describe(status: http.statusCode))
             }
+            
+            AppLog.network("\(label): \(http.statusCode), \(data.count) bytes")
             return data
-
         } catch let error as BoardError {
             throw error
         } catch {
+            AppLog.network("\(label): \(error.localizedDescription)")
             throw BoardError.remoteFailed(reason: error.localizedDescription)
         }
     }

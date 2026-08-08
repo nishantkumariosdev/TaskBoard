@@ -18,6 +18,7 @@ struct LocalTaskStoreContainer {
         if let container = try? makeContainer(inMemory: false) {
             return LocalTaskStoreContainer(modelContainer: container, degradationError: nil)
         }
+        AppLog.store("on disk store unavailable, falling back to memory, this session won't be saved")
         
         do {
             return LocalTaskStoreContainer(

@@ -21,19 +21,23 @@ final class SyncEngine {
         (try? store.fetchPending().count) ?? 0
     }
     
-    func observerLocalChanges() -> AsyncStream<[BoardTask]> {
+    func observeLocalChanges() -> AsyncStream<[BoardTask]> {
         store.observe()
     }
     
     func sync() async -> Bool {
         let pushed = await push()
         let pulled = await pull()
-        return pushed && pulled
+        let succeeded = pushed && pulled
+
+        AppLog.sync("pass \(succeeded ? "ok" : "incomplete"), \(pendingCount()) still pending")
+        return succeeded
     }
 
     private func push() async -> Bool {
         guard let pending = try? store.fetchPending(), !pending.isEmpty else { return true }
 
+        AppLog.sync("pushing \(pending.count) change")
         var allSucceeded = true
         for task in pending {
             do {
@@ -44,6 +48,7 @@ final class SyncEngine {
                     try store.markSynced(id: task.id)
                 }
             } catch {
+                AppLog.sync("send \(task.id) failed, \((error as? BoardError)?.errorDescription ?? error.localizedDescription)")
                 allSucceeded = false
                 continue
             }
@@ -55,6 +60,7 @@ final class SyncEngine {
                     try store.markSynced(id: task.id)
                 }
             } catch {
+                AppLog.sync("sent \(task.id) but could not mark it, \((error as? BoardError)?.errorDescription ?? error.localizedDescription)")
                 allSucceeded = false
             }
         }
@@ -84,6 +90,7 @@ final class SyncEngine {
                 try store.hardDelete(ids: deletedElsewhere)
             }
 
+            AppLog.sync("pulled \(serverTasks.count) from server, \(incoming.count) applied, \(deletedElsewhere.count) removed")
             return true
         } catch {
             return false

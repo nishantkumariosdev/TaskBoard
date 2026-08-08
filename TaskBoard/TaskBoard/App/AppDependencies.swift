@@ -29,8 +29,10 @@ final class AppDependencies: TaskEditorViewModelFactory {
             )
             let engine = SyncEngine(store: store, remote: remote)
             self.syncCoordinator = FirebaseSyncCoordinator(engine: engine, network: NetworkMonitor())
+            AppLog.app("syncing to \(databaseURL.host() ?? databaseURL.absoluteString), board node '\(AppConfiguration.boardNode)'")
         } else {
             self.syncCoordinator = LocalOnlySyncCoordinator()
+            AppLog.app("local only, set AppConfiguration.databaseURL to enable syncing")
         }
         repository.syncCoordinator = syncCoordinator
     }

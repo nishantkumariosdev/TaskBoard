@@ -25,6 +25,14 @@ final class FirebaseSyncCoordinator: SyncCoordinating {
     private var isStarted = false
     private var needsAnotherPass = false
 
+    private enum Trigger: String {
+        case launch
+        case connectivity
+        case localChange = "local change"
+        case poll
+        case manual
+    }
+
     init(engine: SyncEngine, network: NetworkMonitor) {
         self.engine = engine
         self.network = network
@@ -54,9 +62,10 @@ final class FirebaseSyncCoordinator: SyncCoordinating {
 
         network.start { [weak self] isOnline in
             guard let self else { return }
+            AppLog.sync("connectivity: \(isOnline ? "online" : "offline")")
             self.status.isOnline = isOnline
             self.publish()
-            if isOnline { self.requestSync() }
+            if isOnline { self.request(.connectivity) }
         }
 
         status.isOnline = network.isOnline
@@ -64,7 +73,7 @@ final class FirebaseSyncCoordinator: SyncCoordinating {
         
         changesTask = Task { [weak self] in
             guard let self else { return }
-            for await _ in self.engine.observerLocalChanges() {
+            for await _ in self.engine.observeLocalChanges() {
                 self.refreshPendingCount()
             }
         }
@@ -73,18 +82,28 @@ final class FirebaseSyncCoordinator: SyncCoordinating {
             while !Task.isCancelled {
                 try? await Task.sleep(for: Self.pollInterval)
                 guard !Task.isCancelled else { return }
-                await self?.syncNow()
+                await self?.run(.poll)
             }
         }
 
-        Task { await syncNow() }
+        Task { await run(.launch) }
     }
 
     func syncNow() async {
+        await run(.manual)
+    }
+
+    func requestSync() {
+        request(.localChange)
+    }
+
+    private func run(_ trigger: Trigger) async {
         guard !isSyncing else {
             needsAnotherPass = true
+            AppLog.sync("\(trigger.rawValue) arrived, will run again after")
             return
         }
+        AppLog.sync("pass started, trigger: \(trigger.rawValue)")
 
         isSyncing = true
         status.isSyncing = true
@@ -106,12 +125,12 @@ final class FirebaseSyncCoordinator: SyncCoordinating {
         publish()
     }
 
-    func requestSync() {
+    private func request(_ trigger: Trigger) {
         debounceTask?.cancel()
         debounceTask = Task { [weak self] in
             try? await Task.sleep(for: Self.debounce)
             guard !Task.isCancelled else { return }
-            await self?.syncNow()
+            await self?.run(trigger)
         }
     }
 

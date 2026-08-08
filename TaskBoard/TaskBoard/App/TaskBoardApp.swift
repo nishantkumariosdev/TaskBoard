@@ -11,10 +11,16 @@ import SwiftUI
 struct TaskBoardApp: App {
     
     @State private var dependencies = AppDependencies()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
             BoardView(viewModel: dependencies.makeBoardViewModel(), editorFactory: dependencies)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                dependencies.applicationBecameActive()
+            }
         }
     }
 }
