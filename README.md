@@ -6,7 +6,7 @@ Realtime Database when one is reachable.
 
 | First launch | The board | Unsent changes | Editing |
 |:---:|:---:|:---:|:---:|
-| <img src="Screenshots/empty.png" width="200"> | <img src="Screenshots/board.png" width="200"> | <img src="Screenshots/sync.png" width="200"> | <img src="Screenshots/edit.png" width="200"> |
+| <img src="Screenshots/empty.png" width="200"> | <img src="Screenshots/board.png" width="200"> | <img src="Screenshots/sync.png" width="200"> | <img src="Screenshots/editTask.png" width="200"> |
 | Nothing to show yet | Three sections, one scroll | Queued while the server is unreachable | Edit task |
 
 ---
