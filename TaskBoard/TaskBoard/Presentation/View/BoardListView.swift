@@ -93,13 +93,16 @@ struct BoardListView: View {
         .background(.bar)
         .overlay(alignment: .bottom) { Divider() }
         .dropDestination(for: String.self) { items, _ in
-            true
+            handleDrop(items, into: column.status, at: column.tasks.count)
         } isTargeted: { targeted in
-            
+            guard isCollapsed else { return }
+            updateTarget(targeted, to: DropSlot(status: column.status, index: column.tasks.count))
         }
         .overlay(
             Rectangle()
-                .fill(column.status.tint.opacity(0))
+                .fill(column.status.tint.opacity(
+                    isCollapsed && targetedSlot?.status == column.status ? 0.2 : 0
+                ))
                 .allowsHitTesting(false)
         )
     }
@@ -117,7 +120,7 @@ struct BoardListView: View {
                     TaskCardView(task: task, onEdit: { onEdit(task) }, onDelete: { onDelete(task) }, onMove: { onMove(task, $0) })
                         .draggable(task.id) {
                             TaskCardView(task: task, onEdit: {}, onDelete: {}, onMove: { _ in })
-                                .frame(width: 200)
+                                .frame(width: 280)
                         }
                 }
                 .padding(.top, 10)

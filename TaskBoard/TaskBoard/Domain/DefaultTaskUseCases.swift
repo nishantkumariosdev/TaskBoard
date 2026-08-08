@@ -114,7 +114,7 @@ private enum ColumnOrdering {
         return tasks.enumerated().map { index, existing in
             var copy = existing
             copy.orderIndex = index
-            return copy.id == task.id ? copy.touched(at: date) : copy
+            return copy.touched(at: date)
         }
     }
 }
