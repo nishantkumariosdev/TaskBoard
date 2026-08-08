@@ -19,9 +19,11 @@ struct DefaultObserveTasksUseCase: ObserveTasksUseCase {
 @MainActor
 struct DefaultLoadBoardUseCase: LoadBoardUseCase {
     let repository: TaskRepository
+    let syncCoordinator: SyncCoordinating
     
     func execute() throws {
         try repository.load()
+        syncCoordinator.start()
     }
 }
 

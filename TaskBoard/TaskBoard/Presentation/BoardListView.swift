@@ -18,6 +18,7 @@ struct BoardListView: View {
     let onMove: (BoardTask, TaskStatus) -> Void
     let onAdd: (TaskStatus) -> Void
     let onDropTask: (_ taskId: String, _ status: TaskStatus, _ visibleIndex: Int) -> Void
+    let onRefresh: () async -> Void
     
     private struct DropSlot: Equatable {
         let status: TaskStatus
@@ -39,6 +40,8 @@ struct BoardListView: View {
                 }
             }
         }
+        .scrollIndicators(.visible)
+        .refreshable { await onRefresh() }
     }
     
     private func header(for column: BoardViewModel.Column) -> some View {
@@ -106,6 +109,11 @@ struct BoardListView: View {
         VStack(spacing: 10) {
             ForEach(Array(column.tasks.enumerated()), id: \.element.id) { index, task in
                 VStack(spacing: 10) {
+                    insertionIndicator(
+                        tint: column.status.tint,
+                        visible: targetedSlot == DropSlot(status: column.status, index: index)
+                    )
+                    
                     TaskCardView(task: task, onEdit: { onEdit(task) }, onDelete: { onDelete(task) }, onMove: { onMove(task, $0) })
                         .draggable(task.id) {
                             TaskCardView(task: task, onEdit: {}, onDelete: {}, onMove: { _ in })

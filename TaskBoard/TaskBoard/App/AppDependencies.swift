@@ -12,6 +12,7 @@ final class AppDependencies: TaskEditorViewModelFactory {
     
     private let store: LocalTaskStore
     private let repository: DefaultTaskRepository
+    private let syncCoordinator: any SyncCoordinating
     
     init() {
         let storage = LocalTaskStoreContainer.forApp()
@@ -19,6 +20,19 @@ final class AppDependencies: TaskEditorViewModelFactory {
         
         self.store = store
         self.repository = DefaultTaskRepository(store: store)
+        
+        if let databaseURL = AppConfiguration.databaseURL {
+            let remote = FirebaseDatabaseTaskDataSource(
+                databaseURL: databaseURL,
+                boardNode: AppConfiguration.boardNode,
+                client: URLSessionHTTPClient()
+            )
+            let engine = SyncEngine(store: store, remote: remote)
+            self.syncCoordinator = FirebaseSyncCoordinator(engine: engine)
+        } else {
+            self.syncCoordinator = LocalOnlySyncCoordinator()
+        }
+        repository.syncCoordinator = syncCoordinator
     }
     
     private var observerTasksUseCase: ObserveTasksUseCase {
@@ -26,7 +40,7 @@ final class AppDependencies: TaskEditorViewModelFactory {
     }
     
     private var loadBoardUsecase: LoadBoardUseCase {
-        DefaultLoadBoardUseCase(repository: repository)
+        DefaultLoadBoardUseCase(repository: repository, syncCoordinator: syncCoordinator)
     }
     
     private var createTaskUseCase: CreateTaskUseCase {
@@ -46,7 +60,7 @@ final class AppDependencies: TaskEditorViewModelFactory {
     }
     
     func makeBoardViewModel() -> BoardViewModel {
-        let viewModel = BoardViewModel(observeTasks: observerTasksUseCase, loadBoard: loadBoardUsecase, deleteTask: deleteTaskUseCase, moveTask: moveTaskUseCasse)
+        let viewModel = BoardViewModel(observeTasks: observerTasksUseCase, loadBoard: loadBoardUsecase, deleteTask: deleteTaskUseCase, moveTask: moveTaskUseCasse, syncCoordinator: syncCoordinator)
         return viewModel
     }
     

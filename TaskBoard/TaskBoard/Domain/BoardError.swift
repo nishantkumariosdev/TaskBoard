@@ -11,6 +11,7 @@ enum BoardError: LocalizedError {
     case loadFailed(reason: String)
     case persistenceFailed(reason: String)
     case taskNotFound(id: String)
+    case remoteFailed(reason: String)
     
     var errorDescription: String? {
         switch self {
@@ -20,6 +21,8 @@ enum BoardError: LocalizedError {
             return "Could not save your changes. \(reason)"
         case .taskNotFound(let id):
             return "Task does not exist: \(id)"
+        case .remoteFailed(let reason):
+            return "Sync failed. \(reason)"
         }
     }
 }

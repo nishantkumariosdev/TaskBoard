@@ -27,6 +27,7 @@ final class BoardViewModel {
         Column(status: $0, tasks: [])
     }
     private(set) var collapsedStatuses: Set<TaskStatus> = []
+    private(set) var lastSyncedAt: Date?
     
     var isBoardEmpty: Bool {
         columns.allSatisfy(\.tasks.isEmpty)
@@ -36,20 +37,35 @@ final class BoardViewModel {
     private let loadBoard: LoadBoardUseCase
     private let deleteTask: DeleteTaskUseCase
     private let moveTask: MoveTaskUseCase
+    private let syncCoordinator: any SyncCoordinating
     
-    init(observeTasks: ObserveTasksUseCase, loadBoard: LoadBoardUseCase, deleteTask: DeleteTaskUseCase, moveTask: MoveTaskUseCase) {
+    init(observeTasks: ObserveTasksUseCase, loadBoard: LoadBoardUseCase, deleteTask: DeleteTaskUseCase, moveTask: MoveTaskUseCase, syncCoordinator: any SyncCoordinating) {
         self.observeTasks = observeTasks
         self.loadBoard = loadBoard
         self.deleteTask = deleteTask
         self.moveTask = moveTask
+        self.syncCoordinator = syncCoordinator
     }
     
     func start() async {
         load()
         
-        for await tasks in observeTasks.execute() {
-            apply(tasks)
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { @MainActor [self] in
+                for await tasks in observeTasks.execute() {
+                    apply(tasks)
+                }
+            }
+            group.addTask { @MainActor [self] in
+                for await date in syncCoordinator.observeLastSynced() {
+                    lastSyncedAt = date
+                }
+            }
         }
+    }
+    
+    func refresh() async {
+        await syncCoordinator.refresh()
     }
     
     func delete(id: String) {
