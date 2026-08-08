@@ -24,7 +24,9 @@ final class SwiftDataTaskStore: LocalTaskStore {
             let id = UUID()
             observers[id] = continuation
             
-            continuation.yield(currentTasks())
+            if let tasks = try? fetchAll() {
+                continuation.yield(tasks)
+            }
             continuation.onTermination = { [weak self] _ in
                 Task { @MainActor in
                     self?.observers[id] = nil
@@ -108,10 +110,6 @@ final class SwiftDataTaskStore: LocalTaskStore {
             context.delete(entity)
         }
         try commit()
-    }
-    
-    private func currentTasks() -> [BoardTask] {
-        (try? fetchAll()) ?? []
     }
     
     private func publish(_ tasks: [BoardTask]) {
