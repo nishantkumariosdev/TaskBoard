@@ -28,7 +28,8 @@ final class BoardViewModel {
     }
     private(set) var collapsedStatuses: Set<TaskStatus> = []
     private(set) var syncStatus = SyncStatus()
-    
+
+    var banner: String?
     var isBoardEmpty: Bool {
         columns.allSatisfy(\.tasks.isEmpty)
     }
@@ -71,22 +72,24 @@ final class BoardViewModel {
     func delete(id: String) {
         do {
             try self.deleteTask.execute(id: id)
+            banner = nil
         } catch {
-            print("\(message(for: error))")
+            banner = message(for: error)
         }
     }
     
     func move(id: String, to status: TaskStatus, position: Int?) {
         do {
             try self.moveTask.execute(id: id, to: status, position: position)
+            banner = nil
         } catch {
-            print("\(message(for: error))")
+            banner = message(for: error)
         }
     }
     
     func handleDrop(taskId: String, into status: TaskStatus, at visibleIndex: Int) {
         guard let task = task(withId: taskId) else {
-            print("\(BoardError.taskNotFound(id: taskId).localizedDescription))")
+            banner = BoardError.taskNotFound(id: taskId).localizedDescription
             return
         }
         
@@ -108,7 +111,7 @@ final class BoardViewModel {
         }
     }
     
-    private func load() {
+    func load() {
         loadState = .loading
         
         do {

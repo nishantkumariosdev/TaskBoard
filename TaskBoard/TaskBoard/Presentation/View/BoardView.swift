@@ -20,7 +20,13 @@ struct BoardView: View {
             VStack(spacing: 0) {
                 SyncStatusView(status: viewModel.syncStatus)
                 
-                boardLayout
+                if let banner = viewModel.banner {
+                    MessageBanner(message: banner) {
+                        withAnimation { viewModel.banner = nil }
+                    }
+                }
+                
+                content
             }
             .background(Color(.systemBackground))
             .overlay(alignment: .bottomTrailing) { addTaskButton }
@@ -43,6 +49,24 @@ struct BoardView: View {
         }
         .task {
             await viewModel.start()
+        }
+    }
+    
+    @ViewBuilder
+    private var content: some View {
+        switch viewModel.loadState {
+        case .loading:
+            centered {
+                ProgressView("Loading your board…")
+            }
+
+        case .failed(let message):
+            centered {
+                BoardErrorStateView(message: message) { viewModel.load() }
+            }
+
+        case .ready:
+            boardLayout
         }
     }
     
@@ -96,6 +120,15 @@ struct BoardView: View {
             .padding(.trailing, 20)
             .padding(.bottom, 25)
         }
+    }
+    
+    private func centered<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        VStack {
+            Spacer()
+            content()
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
     }
     
     private var deletionBinding: Binding<Bool> {

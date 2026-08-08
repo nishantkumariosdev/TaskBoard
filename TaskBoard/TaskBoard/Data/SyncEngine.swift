@@ -45,7 +45,6 @@ final class SyncEngine {
                     try await remote.delete(id: task.id)
                 } else {
                     try await remote.upsert(task)
-                    try store.markSynced(id: task.id)
                 }
             } catch {
                 AppLog.sync("send \(task.id) failed, \((error as? BoardError)?.errorDescription ?? error.localizedDescription)")
