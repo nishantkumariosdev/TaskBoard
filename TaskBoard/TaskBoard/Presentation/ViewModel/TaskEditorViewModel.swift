@@ -57,6 +57,11 @@ final class TaskEditorViewModel {
         subtasks.lazy.filter(\.isCompleted).count
     }
     
+    var activity: [ActivityEntry] {
+        guard case .edit(let task) = mode else { return [] }
+        return task.activity.reversed()
+    }
+    
     var createdAt: Date? {
         if case .edit(let task) = mode {
             return task.createdAt

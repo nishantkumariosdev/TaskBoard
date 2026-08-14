@@ -43,6 +43,8 @@ struct TaskEditorView: View {
                     .labelsHidden()
                 }
                 
+                activitySection
+                
                 if let createdAt = viewModel.createdAt {
                     Section("Created") {
                         Text(AbsoluteTime.string(from: createdAt))
@@ -153,6 +155,22 @@ struct TaskEditorView: View {
                 .disabled(!viewModel.canAddSubtask)
         }
     }
+    
+    @ViewBuilder
+    private var activitySection: some View {
+        if !viewModel.activity.isEmpty {
+            Section {
+                ForEach(viewModel.activity) { entry in
+                    ActivityRow(entry: entry)
+                }
+            } header: {
+                Text("Activity History")
+                    .textCase(nil)
+            } footer: {
+                Text("Newest first. The last \(ActivityEntry.historyLimit) events are displayed.")
+            }
+        }
+    }
 
     private func toggleAddField() {
         if isAddingSubtask {
@@ -202,5 +220,31 @@ private struct SubtaskRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct ActivityRow: View {
+    let entry: ActivityEntry
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Image(systemName: entry.systemImage)
+                .font(.caption)
+                .foregroundStyle(entry.tint)
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.summary)
+                    .font(.subheadline)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(AbsoluteTime.string(from: entry.timestamp))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 2)
     }
 }

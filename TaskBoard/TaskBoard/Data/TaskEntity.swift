@@ -21,8 +21,9 @@ final class TaskEntity {
     var syncStateRaw: String
     var isArchived: Bool = false
     var subtasks: [SubTask]
+    var activity: [ActivityEntry] = []
     
-    init(id: String, title: String, details: String, statusRaw: String, createdAt: Date, updatedAt: Date, orderIndex: Int, syncStateRaw: String, isArchived: Bool = false, subtasks: [SubTask] = []) {
+    init(id: String, title: String, details: String, statusRaw: String, createdAt: Date, updatedAt: Date, orderIndex: Int, syncStateRaw: String, isArchived: Bool = false, subtasks: [SubTask] = [], activity: [ActivityEntry] = []) {
         self.id = id
         self.title = title
         self.details = details
@@ -33,5 +34,6 @@ final class TaskEntity {
         self.syncStateRaw = syncStateRaw
         self.isArchived = isArchived
         self.subtasks = subtasks
+        self.activity = activity
     }
 }

@@ -42,6 +42,61 @@ extension TaskStatus {
     }
 }
 
+extension ActivityEntry {
+    var summary: String {
+        switch kind {
+        case .created:
+            return "Task created"
+        case .edited:
+            return "Task edited"
+        case .moved:
+            guard let from, let to else { return "Moved to another section" }
+            return "Moved from \(from.displayName) to \(to.displayName)"
+        case .archived:
+            return "Archived"
+        case .restored:
+            return "Restored to Board"
+        case .subtaskAdded:
+            return describe("Subtask added")
+        case .subtaskCompleted:
+            return describe("Subtask completed")
+        case .subtaskReopened:
+            return describe("Subtask reopened")
+        case .subtaskRemoved:
+            return describe("Subtask removed")
+        }
+    }
+
+    var systemImage: String {
+        switch kind {
+        case .created: return "sparkles"
+        case .edited: return "pencil"
+        case .moved: return "arrow.left.arrow.right"
+        case .archived: return "archivebox"
+        case .restored: return "arrow.uturn.backward"
+        case .subtaskAdded: return "plus.circle"
+        case .subtaskCompleted: return "checkmark.circle"
+        case .subtaskReopened: return "circle"
+        case .subtaskRemoved: return "minus.circle"
+        }
+    }
+
+    var tint: Color {
+        switch kind {
+        case .created: return .accentColor
+        case .archived: return .orange
+        case .restored, .subtaskCompleted: return .green
+        case .subtaskRemoved: return .red
+        default: return .secondary
+        }
+    }
+
+    private func describe(_ prefix: String) -> String {
+        guard let subject, !subject.isEmpty else { return prefix }
+        return "\(prefix): \(subject)"
+    }
+}
+
 enum RelativeTime {
     private static let formatter: RelativeDateTimeFormatter = {
         let format = RelativeDateTimeFormatter()

@@ -18,8 +18,9 @@ struct BoardTask: Identifiable {
     var syncState: SyncState
     var isArchived: Bool
     var subtasks: [SubTask]
+    var activity: [ActivityEntry]
     
-    init(id: String, title: String, details: String, status: TaskStatus = .todo, createdAt: Date, updatedAt: Date, orderIndex: Int, syncState: SyncState = .pendingSave, isArchived: Bool = false, subtasks: [SubTask] = []) {
+    init(id: String, title: String, details: String, status: TaskStatus = .todo, createdAt: Date, updatedAt: Date, orderIndex: Int, syncState: SyncState = .pendingSave, isArchived: Bool = false, subtasks: [SubTask] = [], activity: [ActivityEntry] = []) {
         self.id = id
         self.title = title
         self.details = details
@@ -30,6 +31,7 @@ struct BoardTask: Identifiable {
         self.syncState = syncState
         self.isArchived = isArchived
         self.subtasks = subtasks
+        self.activity = activity
     }
 }
 
@@ -73,5 +75,18 @@ extension BoardTask {
 
     var allSubtasksCompleted: Bool {
         hasSubtasks && completedSubtaskCount == subtasks.count
+    }
+    
+    func logging(_ kind: ActivityKind, subject: String? = nil, from: TaskStatus? = nil, to: TaskStatus? = nil, at date: Date) -> BoardTask {
+        var copy = self
+        copy.activity.append(
+            ActivityEntry(kind: kind, timestamp: date, subject: subject, from: from, to: to)
+        )
+
+        let overflow = copy.activity.count - ActivityEntry.historyLimit
+        if overflow > 0 {
+            copy.activity.removeFirst(overflow)
+        }
+        return copy
     }
 }

@@ -36,7 +36,12 @@ struct DefaultCreateTaskUseCase: CreateTaskUseCase {
         let column = try repository.allTasks()
             .filter { $0.status == status && !$0.isArchived }
             .sorted { $0.orderIndex < $1.orderIndex }
-        let task = BoardTask(id: UUID().uuidString, title: title, details: details, status: status, createdAt: now, updatedAt: now, orderIndex: 0, subtasks: subtasks)
+        var task = BoardTask(id: UUID().uuidString, title: title, details: details, status: status, createdAt: now, updatedAt: now, orderIndex: 0, subtasks: subtasks)
+            .logging(.created, at: now)
+        
+        for subtask in subtasks {
+            task = task.logging(.subtaskAdded, subject: subtask.title, at: now)
+        }
         
         try repository.saveAll(ColumnOrdering.renumbered(column, inserting: task, at: 0, updatedOn: now))
         return task
@@ -61,7 +66,18 @@ struct DefaultUpdateTaskUseCase: UpdateTaskUseCase {
             return existing
         }
         
-        let touched = updated.touched(at: Date())
+        let now = Date()
+        var logged = updated
+
+        if updated.title != existing.title || updated.details != existing.details {
+            logged = logged.logging(.edited, at: now)
+        }
+
+        for event in SubtaskDiff.events(from: existing.subtasks, to: subtasks) {
+            logged = logged.logging(event.kind, subject: event.subject, at: now)
+        }
+        
+        let touched = logged.touched(at: Date())
         try repository.save(touched)
         return touched
     }
@@ -98,6 +114,10 @@ struct DefaultMoveTaskUseCase: MoveTaskUseCase {
         var moved = existing
         moved.status = status
         
+        if existing.status != status {
+            moved = moved.logging(.moved, from: existing.status, to: status, at: now)
+        }
+        
         var updates = ColumnOrdering.renumbered(siblings, inserting: moved, at: slot, updatedOn: now)
         if existing.status != status {
             let source = try repository.allTasks()
@@ -126,7 +146,7 @@ struct DefaultArchiveTaskUseCase: ArchiveTaskUseCase {
         
         guard !existing.isArchived else { return existing }
         let now = Date()
-        let archived = existing.archivedTask(true, at: now)
+        let archived = existing.archivedTask(true, at: now).logging(.archived, at: now)
         
         let siblings = try repository.allTasks()
             .filter { $0.status == existing.status && $0.id != id && !$0.isArchived }
@@ -149,7 +169,7 @@ struct DefaultRestoreTaskUseCase: RestoreTaskUseCase {
         guard existing.isArchived else { return existing }
         
         let now = Date()
-        let restored = existing.archivedTask(false, at: now)
+        let restored = existing.archivedTask(false, at: now).logging(.restored, at: now)
         let siblings = try repository.allTasks()
             .filter { $0.status == existing.status && $0.id != id && !$0.isArchived }
             .sorted { $0.orderIndex < $1.orderIndex }
@@ -169,11 +189,20 @@ struct DefaultToggleSubtaskUseCase: ToggleSubtaskUseCase {
     let repository: TaskRepository
 
     func execute(subtaskID: String, in taskID: String) throws -> BoardTask {
-        try repository.updatingSubtasks(of: taskID) { subtasks in
-            guard let index = subtasks.firstIndex(where: { $0.id == subtaskID }) else {
+        try repository.mutating(taskID) { task, now in
+            guard let index = task.subtasks.firstIndex(where: { $0.id == subtaskID }) else {
                 throw BoardError.taskNotFound(id: subtaskID)
             }
-            subtasks[index] = subtasks[index].toggled()
+
+            var updated = task
+            updated.subtasks[index] = updated.subtasks[index].toggled()
+
+            let subtask = updated.subtasks[index]
+            return updated.logging(
+                subtask.isCompleted ? .subtaskCompleted : .subtaskReopened,
+                subject: subtask.title,
+                at: now
+            )
         }
     }
 }
@@ -183,30 +212,29 @@ struct DefaultRemoveSubtaskUseCase: RemoveSubtaskUseCase {
     let repository: TaskRepository
 
     func execute(subtaskID: String, from taskID: String) throws -> BoardTask {
-        try repository.updatingSubtasks(of: taskID) { subtasks in
-            guard subtasks.contains(where: { $0.id == subtaskID }) else {
+        try repository.mutating(taskID) { task, now in
+            guard let removed = task.subtasks.first(where: { $0.id == subtaskID }) else {
                 throw BoardError.taskNotFound(id: subtaskID)
             }
-            subtasks.removeAll { $0.id == subtaskID }
+
+            var updated = task
+            updated.subtasks.removeAll { $0.id == subtaskID }
+            return updated.logging(.subtaskRemoved, subject: removed.title, at: now)
         }
     }
 }
 
 private extension TaskRepository {
-    func updatingSubtasks(of taskID: String, _ change: (inout [SubTask]) throws -> Void) throws -> BoardTask {
+    func mutating(_ taskID: String, _ change: (BoardTask, Date) throws -> BoardTask) throws -> BoardTask {
         guard let existing = try task(id: taskID) else {
             throw BoardError.taskNotFound(id: taskID)
         }
 
-        var subtasks = existing.subtasks
-        try change(&subtasks)
+        let now = Date()
+        let updated = try change(existing, now).touched(at: now)
 
-        var updated = existing
-        updated.subtasks = subtasks
-        let touched = updated.touched(at: Date())
-
-        try save(touched)
-        return touched
+        try save(updated)
+        return updated
     }
 }
 
@@ -233,5 +261,36 @@ private enum ColumnOrdering {
             copy.orderIndex = index
             return copy.touched(at: date)
         }
+    }
+}
+
+private enum SubtaskDiff {
+
+    struct Event {
+        let kind: ActivityKind
+        let subject: String
+    }
+
+    static func events(from old: [SubTask], to new: [SubTask]) -> [Event] {
+        let oldByID = Dictionary(old.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let newIDs = Set(new.map(\.id))
+
+        var events: [Event] = []
+        for subtask in new where oldByID[subtask.id] == nil {
+            events.append(Event(kind: .subtaskAdded, subject: subtask.title))
+        }
+
+        for subtask in old where !newIDs.contains(subtask.id) {
+            events.append(Event(kind: .subtaskRemoved, subject: subtask.title))
+        }
+
+        for subtask in new {
+            guard let before = oldByID[subtask.id], before.isCompleted != subtask.isCompleted else { continue }
+            events.append(
+                Event(kind: subtask.isCompleted ? .subtaskCompleted : .subtaskReopened, subject: subtask.title)
+            )
+        }
+
+        return events
     }
 }

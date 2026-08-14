@@ -17,7 +17,8 @@ struct RemoteTaskDTO: Codable, Sendable {
     let createdAt: Double
     let updatedAt: Double
     let isArchived: Bool
-    let subtasks: [RemoteSubTaskDTO]
+    let subtasks: [RemoteSubTaskDTO]?
+    let activity: [RemoteActivityDTO]?
 }
 
 struct RemoteSubTaskDTO: Codable, Sendable {
@@ -38,6 +39,15 @@ struct RemoteSubTaskDTO: Codable, Sendable {
     }
 }
 
+struct RemoteActivityDTO: Codable, Sendable {
+    let id: String
+    let kind: String
+    let timestamp: Double
+    let subject: String?
+    let from: String?
+    let to: String?
+}
+
 extension RemoteTaskDTO {
 
     init(_ task: BoardTask) {
@@ -50,6 +60,7 @@ extension RemoteTaskDTO {
         self.updatedAt = task.updatedAt.millisecondsSince1970
         self.isArchived = task.isArchived
         self.subtasks = task.subtasks.map(RemoteSubTaskDTO.init)
+        self.activity = task.activity.map(RemoteActivityDTO.init)
     }
 
     func toDomain() -> BoardTask {
@@ -62,7 +73,33 @@ extension RemoteTaskDTO {
             updatedAt: Date(millisecondsSince1970: updatedAt),
             orderIndex: orderIndex,
             isArchived: isArchived,
-            subtasks: subtasks.map { $0.toDomain() }
+            subtasks: (subtasks ?? []).map { $0.toDomain() },
+            activity: (activity ?? []).compactMap { $0.toDomain() }
+        )
+    }
+}
+
+extension RemoteActivityDTO {
+
+    init(_ entry: ActivityEntry) {
+        self.id = entry.id
+        self.kind = entry.kind.rawValue
+        self.timestamp = entry.timestamp.millisecondsSince1970
+        self.subject = entry.subject
+        self.from = entry.from?.rawValue
+        self.to = entry.to?.rawValue
+    }
+
+    func toDomain() -> ActivityEntry? {
+        guard let kind = ActivityKind(rawValue: kind) else { return nil }
+
+        return ActivityEntry(
+            id: id,
+            kind: kind,
+            timestamp: Date(millisecondsSince1970: timestamp),
+            subject: subject,
+            from: from.flatMap(TaskStatus.init(rawValue:)),
+            to: to.flatMap(TaskStatus.init(rawValue:))
         )
     }
 }
