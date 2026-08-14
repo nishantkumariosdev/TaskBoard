@@ -4,6 +4,27 @@ An offline first task board for iPhone that allows users to organize tasks acros
 workflow. Tasks can move through **To Do, In Progress, Done**, and everything works with no network, and changes sync to a Firebase
 Realtime Database when one is reachable.
 
+---
+
+## New Features Added
+
+* Archive and Restore - Users can now archive a task, which then no longer appears on main board. Archived tasks will also remain persisted and will be part of sync flow. All archived tasks can be visible in Archived view where long pressing and clicking Restore to task status restores task to main board.
+
+* Subtasks - A tasks can now have subtasks, where users can add sub tasks and mark it complete or incomplete by clicking radio button and saving tasks. Subtasks can be displayed on main board screen by expand or collapse  icon available when any task have subtasks added. Subtasks can also be removed by swiping left on edit task screen or by long pressing subtask on main board screen.
+
+* Activity History - A read only activity history is displayed when user click on any tasks. User activity is also persisted and synced to remote servers. Users can see Task created, edited, moved between board sections, archived, restored, subtask added, completed, removed along with their timestamp.
+
+Note:
+
+* Known Limitations:
+  * Activity history is capped with maximum of 50 events, where newest first are displayed.
+
+* Future improvements:
+  * Activity history does not shows who has edited this task, as we need device or user id for this. I will update this in later version.
+  * Deleting a task deletes the history along with it. 
+
+---
+
 | First launch | The board | Unsent changes | Editing |
 |:---:|:---:|:---:|:---:|
 | <img src="Screenshots/empty.png" width="200"> | <img src="Screenshots/board.png" width="200"> | <img src="Screenshots/sync.png" width="200"> | <img src="Screenshots/editTask.png" width="200"> |
@@ -79,5 +100,7 @@ blocked, and the board never waits on a request.
 ## AI tools used
 
 * Used Claude and ChatGPT for syntax or pseudo code some framework like SwiftData, Network, and some part of SwiftUI complex rendering.
+
+
 
 
