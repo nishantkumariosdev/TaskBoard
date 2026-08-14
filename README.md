@@ -35,10 +35,10 @@ Realtime Database when one is reachable.
 | Nothing to show yet | Three sections, one scroll | Tasks with sub tasks | Edit task |
 
 
-| Activity history | Archive |
-|:---:|:---:|
-| <img src="Screenshots/activity.png" width="200"> | <img src="Screenshots/archive.png" width="200"> |
-| Activity history | Archived tasks |
+| Activity history | Archive | Dark mode |
+|:---:|:---:|:---:|
+| <img src="Screenshots/activity.png" width="200"> | <img src="Screenshots/archive.png" width="200"> | <img src="Screenshots/darkmode.png" width="200"> |
+| Activity history | Archived tasks | Darkm mode preview |
 
 ---
 
@@ -110,6 +110,7 @@ blocked, and the board never waits on a request.
 ## AI tools used
 
 * Used Claude and ChatGPT for syntax or pseudo code some framework like SwiftData, Network, and some part of SwiftUI complex rendering.
+
 
 
 
