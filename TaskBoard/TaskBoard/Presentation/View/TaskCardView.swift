@@ -13,6 +13,7 @@ struct TaskCardView: View {
     let onEdit: () -> Void
     let onDelete: () -> Void
     let onMove: (TaskStatus) -> Void
+    let onArchive: () -> Void
     
     var body: some View {
         HStack(spacing: 0) {
@@ -45,6 +46,8 @@ struct TaskCardView: View {
             } label: {
                 Label("Move to", systemImage: "arrow.left.arrow.right")
             }
+            
+            Button("Archive", systemImage: "archivebox", action: onArchive)
             
             Button("Delete", systemImage: "trash", role: .destructive, action: onDelete)
         }
@@ -97,9 +100,9 @@ struct TaskCardView: View {
 
 #Preview {
     VStack(spacing: 12) {
-        TaskCardView(task: BoardTask(id: "1", title: "Hello", details: "This is task 1", status: .inProgress, createdAt: .now, updatedAt: .now.addingTimeInterval(-600), orderIndex: 0), onEdit: {}, onDelete: {}, onMove: {_ in})
+        TaskCardView(task: BoardTask(id: "1", title: "Hello", details: "This is task 1", status: .inProgress, createdAt: .now, updatedAt: .now.addingTimeInterval(-600), orderIndex: 0), onEdit: {}, onDelete: {}, onMove: {_ in}, onArchive: {})
         
-        TaskCardView(task: BoardTask(id: "2", title: "Hi", details: "This is task 1", status: .done, createdAt: .now, updatedAt: .now.addingTimeInterval(-600), orderIndex: 1), onEdit: {}, onDelete: {}, onMove: {_ in})
+        TaskCardView(task: BoardTask(id: "2", title: "Hi", details: "This is task 1", status: .done, createdAt: .now, updatedAt: .now.addingTimeInterval(-600), orderIndex: 1), onEdit: {}, onDelete: {}, onMove: {_ in}, onArchive: {})
     }
     .padding()
     .background(Color(.systemGroupedBackground))

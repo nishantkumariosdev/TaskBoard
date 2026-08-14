@@ -8,7 +8,7 @@
 import Foundation
 
 @MainActor
-final class AppDependencies: TaskEditorViewModelFactory {
+final class AppDependencies: TaskEditorViewModelFactory, ArchiveViewModelFactory {
     
     private let store: LocalTaskStore
     private let repository: DefaultTaskRepository
@@ -65,12 +65,24 @@ final class AppDependencies: TaskEditorViewModelFactory {
         DefaultMoveTaskUseCase(repository: repository)
     }
     
+    private var archiveTaskUseCasse: ArchiveTaskUseCase {
+        DefaultArchiveTaskUseCase(repository: repository)
+    }
+    
+    private var restoreTaskUseCasse: RestoreTaskUseCase {
+        DefaultRestoreTaskUseCase(repository: repository)
+    }
+    
     func makeBoardViewModel() -> BoardViewModel {
-        let viewModel = BoardViewModel(observeTasks: observerTasksUseCase, loadBoard: loadBoardUsecase, deleteTask: deleteTaskUseCase, moveTask: moveTaskUseCasse, syncCoordinator: syncCoordinator)
+        let viewModel = BoardViewModel(observeTasks: observerTasksUseCase, loadBoard: loadBoardUsecase, deleteTask: deleteTaskUseCase, moveTask: moveTaskUseCasse, syncCoordinator: syncCoordinator, archiveTask: archiveTaskUseCasse)
         return viewModel
     }
     
     func makeEditorViewModel(mode: TaskEditorViewModel.Mode) -> TaskEditorViewModel {
         TaskEditorViewModel(mode: mode, createTask: createTaskUseCase, updateTask: updateTaskUseCase, moveTask: moveTaskUseCasse)
+    }
+    
+    func makeArchiveViewModel() -> ArchiveViewModel {
+        ArchiveViewModel(observeTasks: observerTasksUseCase, deleteTask: deleteTaskUseCase, restoreTask: restoreTaskUseCasse)
     }
 }

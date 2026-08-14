@@ -28,6 +28,7 @@ final class BoardViewModel {
     }
     private(set) var collapsedStatuses: Set<TaskStatus> = []
     private(set) var syncStatus = SyncStatus()
+    private(set) var archiveCount: Int = 0
 
     var banner: String?
     var isBoardEmpty: Bool {
@@ -39,13 +40,15 @@ final class BoardViewModel {
     private let deleteTask: DeleteTaskUseCase
     private let moveTask: MoveTaskUseCase
     private let syncCoordinator: any SyncCoordinating
+    private let archiveTask: ArchiveTaskUseCase
     
-    init(observeTasks: ObserveTasksUseCase, loadBoard: LoadBoardUseCase, deleteTask: DeleteTaskUseCase, moveTask: MoveTaskUseCase, syncCoordinator: any SyncCoordinating) {
+    init(observeTasks: ObserveTasksUseCase, loadBoard: LoadBoardUseCase, deleteTask: DeleteTaskUseCase, moveTask: MoveTaskUseCase, syncCoordinator: any SyncCoordinating, archiveTask: ArchiveTaskUseCase) {
         self.observeTasks = observeTasks
         self.loadBoard = loadBoard
         self.deleteTask = deleteTask
         self.moveTask = moveTask
         self.syncCoordinator = syncCoordinator
+        self.archiveTask = archiveTask
     }
     
     func start() async {
@@ -122,6 +125,15 @@ final class BoardViewModel {
         }
     }
     
+    func archive(id: String) {
+        do {
+            try self.archiveTask.execute(id: id)
+            banner = nil
+        } catch {
+            banner = message(for: error)
+        }
+    }
+    
     private func task(withId id: String) -> BoardTask? {
         columns.lazy.flatMap(\.tasks).first { $0.id == id }
     }
@@ -131,14 +143,17 @@ final class BoardViewModel {
     }
     
     private func apply(_ tasks: [BoardTask]) {
+        let boardTasks = tasks.filter { !$0.isArchived }
+        
         columns = TaskStatus.allCases.map { status in
             Column(
                 status: status,
-                tasks: tasks
+                tasks: boardTasks
                     .filter { $0.status == status }
                     .sorted { $0.orderIndex < $1.orderIndex }
             )
         }
+        archiveCount = tasks.count - boardTasks.count
         
         if case .failed = loadState { loadState = .ready }
     }

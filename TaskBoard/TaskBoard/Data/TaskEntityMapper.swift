@@ -17,12 +17,13 @@ enum TaskEntityMapper {
             createdAt: entity.createdAt,
             updatedAt: entity.updatedAt,
             orderIndex: entity.orderIndex,
-            syncState: SyncState(rawValue: entity.syncStateRaw) ?? .pendingSave
+            syncState: SyncState(rawValue: entity.syncStateRaw) ?? .pendingSave,
+            isArchived: entity.isArchived
         )
     }
     
     static func toEntity(_ task: BoardTask) -> TaskEntity {
-        TaskEntity(id: task.id, title: task.title, details: task.details, statusRaw: task.status.rawValue, createdAt: task.createdAt, updatedAt: task.updatedAt, orderIndex: task.orderIndex, syncStateRaw: task.syncState.rawValue)
+        TaskEntity(id: task.id, title: task.title, details: task.details, statusRaw: task.status.rawValue, createdAt: task.createdAt, updatedAt: task.updatedAt, orderIndex: task.orderIndex, syncStateRaw: task.syncState.rawValue, isArchived: task.isArchived)
     }
     
     static func apply(_ task: BoardTask, to entity: TaskEntity) {
@@ -32,5 +33,6 @@ enum TaskEntityMapper {
         entity.updatedAt = task.updatedAt
         entity.orderIndex = task.orderIndex
         entity.syncStateRaw = task.syncState.rawValue
+        entity.isArchived = task.isArchived
     }
 }

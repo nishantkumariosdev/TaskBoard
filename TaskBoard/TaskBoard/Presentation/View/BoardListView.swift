@@ -19,6 +19,7 @@ struct BoardListView: View {
     let onAdd: (TaskStatus) -> Void
     let onDropTask: (_ taskId: String, _ status: TaskStatus, _ visibleIndex: Int) -> Void
     let onRefresh: () async -> Void
+    let onArchive: (BoardTask) -> Void
     
     private struct DropSlot: Equatable {
         let status: TaskStatus
@@ -117,9 +118,9 @@ struct BoardListView: View {
                         visible: targetedSlot == DropSlot(status: column.status, index: index)
                     )
                     
-                    TaskCardView(task: task, onEdit: { onEdit(task) }, onDelete: { onDelete(task) }, onMove: { onMove(task, $0) })
+                    TaskCardView(task: task, onEdit: { onEdit(task) }, onDelete: { onDelete(task) }, onMove: { onMove(task, $0) }, onArchive: { onArchive(task) })
                         .draggable(task.id) {
-                            TaskCardView(task: task, onEdit: {}, onDelete: {}, onMove: { _ in })
+                            TaskCardView(task: task, onEdit: {}, onDelete: {}, onMove: { _ in }, onArchive: {})
                                 .frame(width: 280)
                         }
                 }

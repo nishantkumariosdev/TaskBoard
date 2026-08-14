@@ -39,3 +39,15 @@ protocol MoveTaskUseCase {
     @discardableResult
     func execute(id: String, to status: TaskStatus, position: Int?) throws -> BoardTask
 }
+
+@MainActor
+protocol ArchiveTaskUseCase {
+    @discardableResult
+    func execute(id: String) throws -> BoardTask
+}
+
+@MainActor
+protocol RestoreTaskUseCase {
+    @discardableResult
+    func execute(id: String) throws -> BoardTask
+}

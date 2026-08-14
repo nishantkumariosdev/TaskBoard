@@ -97,8 +97,65 @@ struct DefaultMoveTaskUseCase: MoveTaskUseCase {
         var moved = existing
         moved.status = status
         
-        let renumbered = ColumnOrdering.renumbered(siblings, inserting: moved, at: slot, updatedOn: now)
+        var updates = ColumnOrdering.renumbered(siblings, inserting: moved, at: slot, updatedOn: now)
+        if existing.status != status {
+            let source = try repository.allTasks()
+                .filter{ $0.status == existing.status && $0.id != id && !$0.isArchived }
+                .sorted { $0.orderIndex < $1.orderIndex }
+            updates += ColumnOrdering.reorderAfterArchive(source, updatedOn: now)
+        }
+        
+        
+        try repository.saveAll(updates)
+        guard let result = updates.first(where: { $0.id == id }) else {
+            throw BoardError.taskNotFound(id: id)
+        }
+        return result
+    }
+}
+
+@MainActor
+struct DefaultArchiveTaskUseCase: ArchiveTaskUseCase {
+    let repository: TaskRepository
+
+    func execute(id: String) throws -> BoardTask {
+        guard let existing = try repository.task(id: id) else {
+            throw BoardError.taskNotFound(id: id)
+        }
+        
+        guard !existing.isArchived else { return existing }
+        let now = Date()
+        let archived = existing.archivedTask(true, at: now)
+        
+        let siblings = try repository.allTasks()
+            .filter { $0.status == existing.status && $0.id != id && !$0.isArchived }
+            .sorted { $0.orderIndex < $1.orderIndex }
+        
+        try repository.saveAll([archived] + ColumnOrdering.reorderAfterArchive(siblings, updatedOn: now))
+        return archived
+    }
+}
+
+@MainActor
+struct DefaultRestoreTaskUseCase: RestoreTaskUseCase {
+    let repository: TaskRepository
+
+    func execute(id: String) throws -> BoardTask {
+        guard let existing = try repository.task(id: id) else {
+            throw BoardError.taskNotFound(id: id)
+        }
+        
+        guard existing.isArchived else { return existing }
+        
+        let now = Date()
+        let restored = existing.archivedTask(false, at: now)
+        let siblings = try repository.allTasks()
+            .filter { $0.status == existing.status && $0.id != id && !$0.isArchived }
+            .sorted { $0.orderIndex < $1.orderIndex }
+        
+        let renumbered = ColumnOrdering.renumbered(siblings, inserting: restored, at: siblings.count, updatedOn: now)
         try repository.saveAll(renumbered)
+        
         guard let result = renumbered.first(where: { $0.id == id }) else {
             throw BoardError.taskNotFound(id: id)
         }
@@ -115,6 +172,16 @@ private enum ColumnOrdering {
             guard existing.id == task.id || existing.orderIndex != index else {
                 return nil
             }
+            var copy = existing
+            copy.orderIndex = index
+            return copy.touched(at: date)
+        }
+    }
+    
+    static func reorderAfterArchive(_ column: [BoardTask], updatedOn date: Date) -> [BoardTask] {
+        column.enumerated().compactMap { index, existing in
+            guard existing.orderIndex != index else { return nil }
+            
             var copy = existing
             copy.orderIndex = index
             return copy.touched(at: date)

@@ -12,8 +12,10 @@ struct BoardView: View {
     @State var viewModel: BoardViewModel
     
     let editorFactory: any TaskEditorViewModelFactory
+    let archiveFactory: any ArchiveViewModelFactory
     @State private var editorMode: TaskEditorViewModel.Mode?
     @State private var pendingDeletion: BoardTask?
+    @State private var isArchiveShowing: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -32,8 +34,16 @@ struct BoardView: View {
             .overlay(alignment: .bottomTrailing) { addTaskButton }
             .navigationTitle("Task Board")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    archiveButton
+                }
+            }
             .sheet(item: $editorMode) { mode in
                 TaskEditorView(viewModel: editorFactory.makeEditorViewModel(mode: mode))
+            }
+            .sheet(isPresented: $isArchiveShowing) {
+                ArchiveView(viewModel: archiveFactory.makeArchiveViewModel())
             }
             .confirmationDialog("Delete this task", isPresented: deletionBinding, titleVisibility: .visible, presenting: pendingDeletion) { task in
                 Button("Delete", role: .destructive) {
@@ -89,7 +99,10 @@ struct BoardView: View {
             onDropTask: { taskId, status, index in
                 viewModel.handleDrop(taskId: taskId, into: status, at: index)
             },
-            onRefresh: { await viewModel.refresh() }
+            onRefresh: { await viewModel.refresh() },
+            onArchive: { task in
+                viewModel.archive(id: task.id)
+            }
         )
     }
     
@@ -119,6 +132,20 @@ struct BoardView: View {
             .buttonStyle(.plain)
             .padding(.trailing, 20)
             .padding(.bottom, 25)
+        }
+    }
+    
+    private var archiveButton: some View {
+        Button {
+            isArchiveShowing = true
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: "archivebox")
+                if viewModel.archiveCount > 0 {
+                    Text("\(viewModel.archiveCount)")
+                        .font(.caption.weight(.semibold))
+                }
+            }
         }
     }
     

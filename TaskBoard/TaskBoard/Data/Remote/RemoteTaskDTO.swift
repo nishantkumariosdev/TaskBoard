@@ -16,6 +16,7 @@ struct RemoteTaskDTO: Codable, Sendable {
     let orderIndex: Int
     let createdAt: Double
     let updatedAt: Double
+    let isArchived: Bool
 }
 
 extension RemoteTaskDTO {
@@ -28,6 +29,7 @@ extension RemoteTaskDTO {
         self.orderIndex = task.orderIndex
         self.createdAt = task.createdAt.millisecondsSince1970
         self.updatedAt = task.updatedAt.millisecondsSince1970
+        self.isArchived = task.isArchived
     }
 
     func toDomain() -> BoardTask {
@@ -38,7 +40,8 @@ extension RemoteTaskDTO {
             status: TaskStatus(rawValue: status) ?? .todo,
             createdAt: Date(millisecondsSince1970: createdAt),
             updatedAt: Date(millisecondsSince1970: updatedAt),
-            orderIndex: orderIndex
+            orderIndex: orderIndex,
+            isArchived: isArchived
         )
     }
 }

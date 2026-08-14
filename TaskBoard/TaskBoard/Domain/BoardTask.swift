@@ -16,8 +16,9 @@ struct BoardTask: Identifiable {
     var updatedAt: Date
     var orderIndex: Int
     var syncState: SyncState
+    var isArchived: Bool
     
-    init(id: String, title: String, details: String, status: TaskStatus = .todo, createdAt: Date, updatedAt: Date, orderIndex: Int, syncState: SyncState = .pendingSave) {
+    init(id: String, title: String, details: String, status: TaskStatus = .todo, createdAt: Date, updatedAt: Date, orderIndex: Int, syncState: SyncState = .pendingSave, isArchived: Bool = false) {
         self.id = id
         self.title = title
         self.details = details
@@ -26,6 +27,7 @@ struct BoardTask: Identifiable {
         self.updatedAt = updatedAt
         self.orderIndex = orderIndex
         self.syncState = syncState
+        self.isArchived = isArchived
     }
 }
 
@@ -50,5 +52,12 @@ extension BoardTask {
     
     var hasBeenEdited: Bool {
         updatedAt > createdAt
+    }
+    
+    func archivedTask(_ archived: Bool, at date: Date) -> BoardTask {
+        var copy = self
+        copy.isArchived = archived
+        copy.updatedAt = date
+        return copy
     }
 }

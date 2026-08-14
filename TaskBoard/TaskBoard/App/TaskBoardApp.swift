@@ -15,7 +15,7 @@ struct TaskBoardApp: App {
 
     var body: some Scene {
         WindowGroup {
-            BoardView(viewModel: dependencies.makeBoardViewModel(), editorFactory: dependencies)
+            BoardView(viewModel: dependencies.makeBoardViewModel(), editorFactory: dependencies, archiveFactory: dependencies)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
