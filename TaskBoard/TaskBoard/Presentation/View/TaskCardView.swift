@@ -28,7 +28,7 @@ struct TaskCardView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(.white))
+                .fill(Color(.secondarySystemGroupedBackground))
         )
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(

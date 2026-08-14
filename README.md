@@ -6,7 +6,7 @@ Realtime Database when one is reachable.
 
 ---
 
-## New Features Added
+## New Features Added - version 2.0
 
 * Archive and Restore - Users can now archive a task, which then no longer appears on main board. Archived tasks will also remain persisted and will be part of sync flow. All archived tasks can be visible in Archived view where long pressing and clicking Restore to task status restores task to main board.
 
@@ -14,7 +14,9 @@ Realtime Database when one is reachable.
 
 * Activity History - A read only activity history is displayed when user click on any tasks. User activity is also persisted and synced to remote servers. Users can see Task created, edited, moved between board sections, archived, restored, subtask added, completed, removed along with their timestamp.
 
-Note:
+* Bug fixes: Now supports dark mode also.
+
+* Note: Users can update to this latest version, every thing will work fine with tasks present in previous version 1.0 and upgrading to this latest. Prefer deleting and reinstalling app to show full activity history.
 
 * Known Limitations:
   * Activity history is capped with maximum of 50 events, where newest first are displayed.
@@ -50,7 +52,7 @@ Build and run on any iPhone simulator, iOS 17 or later, or on iPhone device by a
 
 ---
 
-## What it does
+## What it does - version 1.0
 
 **The board** — There are three sections in one vertical scroll. Create, edit, delete,
 drag to reorder, drag between sections. Sections collapse. Long press a task for
