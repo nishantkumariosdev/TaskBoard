@@ -25,10 +25,18 @@ Note:
 
 ---
 
-| First launch | The board | Unsent changes | Editing |
+## Screenshots
+
+| First launch | Task board | SubTask board | Editing |
 |:---:|:---:|:---:|:---:|
-| <img src="Screenshots/empty.png" width="200"> | <img src="Screenshots/board.png" width="200"> | <img src="Screenshots/sync.png" width="200"> | <img src="Screenshots/editTask.png" width="200"> |
-| Nothing to show yet | Three sections, one scroll | Queued while the server is unreachable | Edit task |
+| <img src="Screenshots/empty.png" width="200"> | <img src="Screenshots/board.png" width="200"> | <img src="Screenshots/board1.png" width="200"> | <img src="Screenshots/editTask.png" width="200"> |
+| Nothing to show yet | Three sections, one scroll | Tasks with sub tasks | Edit task |
+
+
+| Activity history | Archive |
+|:---:|:---:|
+| <img src="Screenshots/activity.png" width="200"> | <img src="Screenshots/archive.png" width="200"> |
+| Activity history | Archived tasks |
 
 ---
 
@@ -100,7 +108,6 @@ blocked, and the board never waits on a request.
 ## AI tools used
 
 * Used Claude and ChatGPT for syntax or pseudo code some framework like SwiftData, Network, and some part of SwiftUI complex rendering.
-
 
 
 
