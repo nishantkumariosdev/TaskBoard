@@ -102,6 +102,14 @@ struct BoardView: View {
             onRefresh: { await viewModel.refresh() },
             onArchive: { task in
                 viewModel.archive(id: task.id)
+            },
+            expandedTaskIDs: viewModel.expandedTaskIDs,
+            onToggleExpand: { viewModel.toggleExpansion($0.id) },
+            onToggleSubtask: { subtask, task in
+                viewModel.toggleSubtask(subtask.id, in: task.id)
+            },
+            onRemoveSubtask: { subtask, task in
+                withAnimation { viewModel.removeSubtask(subtask.id, from: task.id) }
             }
         )
     }

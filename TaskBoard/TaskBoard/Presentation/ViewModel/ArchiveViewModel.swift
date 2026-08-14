@@ -55,7 +55,9 @@ final class ArchiveViewModel {
     }
     
     private func apply(_ tasks: [BoardTask]) {
-        self.tasks = tasks.filter(\.isArchived)
+        self.tasks = tasks
+            .filter(\.isArchived)
+            .sorted { $0.updatedAt > $1.updatedAt }
     }
     
     private func message(for error: Error) -> String {

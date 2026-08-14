@@ -15,6 +15,9 @@ struct TaskCardView: View {
     let onMove: (TaskStatus) -> Void
     let onArchive: () -> Void
     
+    var isExpanded: Bool = false
+    var onToggleExpand: (() -> Void)? = nil
+    
     var body: some View {
         HStack(spacing: 0) {
             Rectangle()
@@ -70,19 +73,75 @@ struct TaskCardView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             
-            HStack(spacing: 6) {
-                Image(systemName: timestampSymbol)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                
-                Text(timestampLabel)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                
-                Spacer(minLength: 0)
-            }
+            footerRow
         }
         .padding(12)
+    }
+    
+    private var footerRow: some View {
+        HStack(spacing: 6) {
+            Image(systemName: timestampSymbol)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+
+            Text(timestampLabel)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            Spacer(minLength: 8)
+
+            if task.hasSubtasks {
+                subtaskProgress
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var subtaskProgress: some View {
+        if let onToggleExpand {
+            Button {
+                withAnimation { onToggleExpand() }
+            } label: {
+                progressRow(showsChevron: true)
+            }
+            .buttonStyle(.plain)
+        } else {
+            progressRow(showsChevron: false)
+        }
+    }
+    
+    private func progressRow(showsChevron: Bool) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: task.allSubtasksCompleted ? "checklist.checked" : "checklist")
+                .font(.caption2)
+                .foregroundStyle(progressTint)
+
+            Text("\(task.completedSubtaskCount)/\(task.subtasks.count)")
+                .font(.caption2.weight(.medium))
+                .monospacedDigit()
+                .foregroundStyle(progressTint)
+
+            ProgressView(value: Double(task.completedSubtaskCount), total: Double(task.subtasks.count))
+                .progressViewStyle(.linear)
+                .tint(task.allSubtasksCompleted ? .green : task.status.tint)
+                .frame(width: 48)
+
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.secondary)
+                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                    .frame(width: 10)
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.leading, 10)
+        .contentShape(Rectangle())
+    }
+    
+    private var progressTint: Color {
+        task.allSubtasksCompleted ? .green : .secondary
     }
     
     private var borderColor: Color {
@@ -96,15 +155,4 @@ struct TaskCardView: View {
     private var timestampLabel: String {
         task.hasBeenEdited ? "Updated \(RelativeTime.string(from: task.updatedAt))" : "Created \(RelativeTime.string(from: task.createdAt))"
     }
-}
-
-#Preview {
-    VStack(spacing: 12) {
-        TaskCardView(task: BoardTask(id: "1", title: "Hello", details: "This is task 1", status: .inProgress, createdAt: .now, updatedAt: .now.addingTimeInterval(-600), orderIndex: 0), onEdit: {}, onDelete: {}, onMove: {_ in}, onArchive: {})
-        
-        TaskCardView(task: BoardTask(id: "2", title: "Hi", details: "This is task 1", status: .done, createdAt: .now, updatedAt: .now.addingTimeInterval(-600), orderIndex: 1), onEdit: {}, onDelete: {}, onMove: {_ in}, onArchive: {})
-    }
-    .padding()
-    .background(Color(.systemGroupedBackground))
-    
 }

@@ -31,6 +31,8 @@ final class TaskEditorViewModel {
     var title: String
     var details: String
     var status: TaskStatus
+    var subtasks: [SubTask]
+    var newSubtaskTitle: String = ""
     
     let mode: Mode
     
@@ -45,6 +47,14 @@ final class TaskEditorViewModel {
     
     var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
+    var canAddSubtask: Bool {
+        !newSubtaskTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    var completedSubtaskCount: Int {
+        subtasks.lazy.filter(\.isCompleted).count
     }
     
     var createdAt: Date? {
@@ -83,10 +93,12 @@ final class TaskEditorViewModel {
             self.title = ""
             self.details = ""
             self.status = status
+            self.subtasks = []
         case .edit(let task):
             self.title = task.title
             self.details = task.details
             self.status = task.status
+            self.subtasks = task.subtasks
         }
     }
     
@@ -94,9 +106,9 @@ final class TaskEditorViewModel {
         do {
             switch mode {
             case .create:
-                try createTask.execute(title: title, details: details, status: status)
+                try createTask.execute(title: title, details: details, status: status, subtasks: subtasks)
             case .edit(let task):
-                try updateTask.execute(id: task.id, title: title, details: details)
+                try updateTask.execute(id: task.id, title: title, details: details, subtasks: subtasks)
                 
                 if status != task.status {
                     try moveTask.execute(id: task.id, to: status, position: 0)
@@ -106,5 +118,26 @@ final class TaskEditorViewModel {
         } catch {
             return false
         }
+    }
+    
+    func addSubtask() {
+        let trimmed = newSubtaskTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        subtasks.append(SubTask(title: trimmed))
+        newSubtaskTitle = ""
+    }
+
+    func toggleSubtask(id: String) {
+        guard let index = subtasks.firstIndex(where: { $0.id == id }) else { return }
+        subtasks[index] = subtasks[index].toggled()
+    }
+
+    func removeSubtask(id: String) {
+        subtasks.removeAll { $0.id == id }
+    }
+
+    func removeSubtasks(at offsets: IndexSet) {
+        subtasks.remove(atOffsets: offsets)
     }
 }

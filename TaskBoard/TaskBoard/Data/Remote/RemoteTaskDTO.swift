@@ -17,6 +17,25 @@ struct RemoteTaskDTO: Codable, Sendable {
     let createdAt: Double
     let updatedAt: Double
     let isArchived: Bool
+    let subtasks: [RemoteSubTaskDTO]
+}
+
+struct RemoteSubTaskDTO: Codable, Sendable {
+    let id: String
+    let title: String
+    let isCompleted: Bool
+    let createdAt: Double
+    
+    init(_ subTask: SubTask) {
+        self.id = subTask.id
+        self.title = subTask.title
+        self.isCompleted = subTask.isCompleted
+        self.createdAt = subTask.createdAt.millisecondsSince1970
+    }
+    
+    func toDomain() -> SubTask {
+        SubTask(id: id, title: title, isCompleted: isCompleted, createdAt: Date(millisecondsSince1970: createdAt))
+    }
 }
 
 extension RemoteTaskDTO {
@@ -30,6 +49,7 @@ extension RemoteTaskDTO {
         self.createdAt = task.createdAt.millisecondsSince1970
         self.updatedAt = task.updatedAt.millisecondsSince1970
         self.isArchived = task.isArchived
+        self.subtasks = task.subtasks.map(RemoteSubTaskDTO.init)
     }
 
     func toDomain() -> BoardTask {
@@ -41,7 +61,8 @@ extension RemoteTaskDTO {
             createdAt: Date(millisecondsSince1970: createdAt),
             updatedAt: Date(millisecondsSince1970: updatedAt),
             orderIndex: orderIndex,
-            isArchived: isArchived
+            isArchived: isArchived,
+            subtasks: subtasks.map { $0.toDomain() }
         )
     }
 }

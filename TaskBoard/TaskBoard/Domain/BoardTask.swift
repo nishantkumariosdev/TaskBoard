@@ -17,8 +17,9 @@ struct BoardTask: Identifiable {
     var orderIndex: Int
     var syncState: SyncState
     var isArchived: Bool
+    var subtasks: [SubTask]
     
-    init(id: String, title: String, details: String, status: TaskStatus = .todo, createdAt: Date, updatedAt: Date, orderIndex: Int, syncState: SyncState = .pendingSave, isArchived: Bool = false) {
+    init(id: String, title: String, details: String, status: TaskStatus = .todo, createdAt: Date, updatedAt: Date, orderIndex: Int, syncState: SyncState = .pendingSave, isArchived: Bool = false, subtasks: [SubTask] = []) {
         self.id = id
         self.title = title
         self.details = details
@@ -28,6 +29,7 @@ struct BoardTask: Identifiable {
         self.orderIndex = orderIndex
         self.syncState = syncState
         self.isArchived = isArchived
+        self.subtasks = subtasks
     }
 }
 
@@ -59,5 +61,17 @@ extension BoardTask {
         copy.isArchived = archived
         copy.updatedAt = date
         return copy
+    }
+    
+    var hasSubtasks: Bool {
+        !subtasks.isEmpty
+    }
+    
+    var completedSubtaskCount: Int {
+        subtasks.lazy.filter(\.isCompleted).count
+    }
+
+    var allSubtasksCompleted: Bool {
+        hasSubtasks && completedSubtaskCount == subtasks.count
     }
 }

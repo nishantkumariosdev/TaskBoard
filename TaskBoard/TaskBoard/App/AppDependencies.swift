@@ -73,8 +73,16 @@ final class AppDependencies: TaskEditorViewModelFactory, ArchiveViewModelFactory
         DefaultRestoreTaskUseCase(repository: repository)
     }
     
+    private var toggleSubtaskUseCase: ToggleSubtaskUseCase {
+        DefaultToggleSubtaskUseCase(repository: repository)
+    }
+
+    private var removeSubtaskUseCase: RemoveSubtaskUseCase {
+        DefaultRemoveSubtaskUseCase(repository: repository)
+    }
+    
     func makeBoardViewModel() -> BoardViewModel {
-        let viewModel = BoardViewModel(observeTasks: observerTasksUseCase, loadBoard: loadBoardUsecase, deleteTask: deleteTaskUseCase, moveTask: moveTaskUseCasse, syncCoordinator: syncCoordinator, archiveTask: archiveTaskUseCasse)
+        let viewModel = BoardViewModel(observeTasks: observerTasksUseCase, loadBoard: loadBoardUsecase, deleteTask: deleteTaskUseCase, moveTask: moveTaskUseCasse, syncCoordinator: syncCoordinator, archiveTask: archiveTaskUseCasse, toggleSubtask: toggleSubtaskUseCase, removeSubtask: removeSubtaskUseCase)
         return viewModel
     }
     

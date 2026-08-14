@@ -21,6 +21,11 @@ struct BoardListView: View {
     let onRefresh: () async -> Void
     let onArchive: (BoardTask) -> Void
     
+    let expandedTaskIDs: Set<String>
+    let onToggleExpand: (BoardTask) -> Void
+    let onToggleSubtask: (SubTask, BoardTask) -> Void
+    let onRemoveSubtask: (SubTask, BoardTask) -> Void
+    
     private struct DropSlot: Equatable {
         let status: TaskStatus
         let index: Int
@@ -118,11 +123,19 @@ struct BoardListView: View {
                         visible: targetedSlot == DropSlot(status: column.status, index: index)
                     )
                     
-                    TaskCardView(task: task, onEdit: { onEdit(task) }, onDelete: { onDelete(task) }, onMove: { onMove(task, $0) }, onArchive: { onArchive(task) })
-                        .draggable(task.id) {
-                            TaskCardView(task: task, onEdit: {}, onDelete: {}, onMove: { _ in }, onArchive: {})
-                                .frame(width: 280)
-                        }
+                    TaskCardView(
+                        task: task,
+                        onEdit: { onEdit(task) },
+                        onDelete: { onDelete(task) },
+                        onMove: { onMove(task, $0) },
+                        onArchive: { onArchive(task) },
+                        isExpanded: expandedTaskIDs.contains(task.id),
+                        onToggleExpand: { onToggleExpand(task) }
+                    )
+                    .draggable(task.id) {
+                        TaskCardView(task: task, onEdit: {}, onDelete: {}, onMove: { _ in }, onArchive: {})
+                            .frame(width: 280)
+                    }
                 }
                 .padding(.top, 10)
                 .contentShape(Rectangle())
@@ -130,6 +143,10 @@ struct BoardListView: View {
                     handleDrop(items, into: column.status, at: index)
                 } isTargeted: { targeted in
                     updateTarget(targeted, to: DropSlot(status: column.status, index: index))
+                }
+                        
+                if expandedTaskIDs.contains(task.id) {
+                    checklist(for: task, tint: column.status.tint)
                 }
             }
             
@@ -194,5 +211,20 @@ struct BoardListView: View {
         guard let id = items.first else { return false }
         onDropTask(id, status, index)
         return true
+    }
+    
+    private func checklist(for task: BoardTask, tint: Color) -> some View {
+        VStack(spacing: 6) {
+            ForEach(task.subtasks) { subtask in
+                SubtaskCardView(
+                    subtask: subtask,
+                    tint: tint,
+                    onToggle: { onToggleSubtask(subtask, task) },
+                    onRemove: { onRemoveSubtask(subtask, task) }
+                )
+            }
+        }
+        .padding(.leading, 28)
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 }

@@ -29,6 +29,7 @@ final class BoardViewModel {
     private(set) var collapsedStatuses: Set<TaskStatus> = []
     private(set) var syncStatus = SyncStatus()
     private(set) var archiveCount: Int = 0
+    private(set) var expandedTaskIDs: Set<String> = []
 
     var banner: String?
     var isBoardEmpty: Bool {
@@ -41,14 +42,18 @@ final class BoardViewModel {
     private let moveTask: MoveTaskUseCase
     private let syncCoordinator: any SyncCoordinating
     private let archiveTask: ArchiveTaskUseCase
+    private let toggleSubtask: ToggleSubtaskUseCase
+    private let removeSubtask: RemoveSubtaskUseCase
     
-    init(observeTasks: ObserveTasksUseCase, loadBoard: LoadBoardUseCase, deleteTask: DeleteTaskUseCase, moveTask: MoveTaskUseCase, syncCoordinator: any SyncCoordinating, archiveTask: ArchiveTaskUseCase) {
+    init(observeTasks: ObserveTasksUseCase, loadBoard: LoadBoardUseCase, deleteTask: DeleteTaskUseCase, moveTask: MoveTaskUseCase, syncCoordinator: any SyncCoordinating, archiveTask: ArchiveTaskUseCase, toggleSubtask: ToggleSubtaskUseCase, removeSubtask: RemoveSubtaskUseCase) {
         self.observeTasks = observeTasks
         self.loadBoard = loadBoard
         self.deleteTask = deleteTask
         self.moveTask = moveTask
         self.syncCoordinator = syncCoordinator
         self.archiveTask = archiveTask
+        self.toggleSubtask = toggleSubtask
+        self.removeSubtask = removeSubtask
     }
     
     func start() async {
@@ -128,6 +133,36 @@ final class BoardViewModel {
     func archive(id: String) {
         do {
             try self.archiveTask.execute(id: id)
+            banner = nil
+        } catch {
+            banner = message(for: error)
+        }
+    }
+    
+    func toggleExpansion(_ taskID: String) {
+        if expandedTaskIDs.contains(taskID) {
+            expandedTaskIDs.remove(taskID)
+        } else {
+            expandedTaskIDs.insert(taskID)
+        }
+    }
+
+    func isExpanded(_ taskID: String) -> Bool {
+        expandedTaskIDs.contains(taskID)
+    }
+
+    func toggleSubtask(_ subtaskID: String, in taskID: String) {
+        do {
+            try toggleSubtask.execute(subtaskID: subtaskID, in: taskID)
+            banner = nil
+        } catch {
+            banner = message(for: error)
+        }
+    }
+
+    func removeSubtask(_ subtaskID: String, from taskID: String) {
+        do {
+            try removeSubtask.execute(subtaskID: subtaskID, from: taskID)
             banner = nil
         } catch {
             banner = message(for: error)

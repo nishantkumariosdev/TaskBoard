@@ -12,6 +12,8 @@ struct TaskEditorView: View {
     @State var viewModel: TaskEditorViewModel
     @Environment(\.dismiss) private var dismiss
     @FocusState private var titleFocused: Bool
+    @FocusState private var newSubtaskFocused: Bool
+    @State private var isAddingSubtask = false
     
     var body: some View {
         NavigationStack {
@@ -27,6 +29,8 @@ struct TaskEditorView: View {
                     TextField("Add any details (optional)", text: $viewModel.details, axis: .vertical)
                         .lineLimit(3...8)
                 }
+                
+                subTaskSection
                 
                 Section("Status") {
                     Picker("Status", selection: $viewModel.status) {
@@ -70,5 +74,133 @@ struct TaskEditorView: View {
                 titleFocused = !viewModel.isEditing
             }
         }
+    }
+    
+    private var subTaskSection: some View {
+        Section {
+            ForEach(viewModel.subtasks) { subtask in
+                SubtaskRow(subtask: subtask) {
+                    withAnimation {
+                        viewModel.toggleSubtask(id: subtask.id)
+                    }
+                }
+                .swipeActions(edge: .trailing) {
+                    Button(role: .destructive) {
+                        withAnimation { viewModel.removeSubtask(id: subtask.id) }
+                    } label: {
+                        Label("Remove", systemImage: "trash")
+                    }
+                }
+            }
+            .onDelete { offsets in
+                withAnimation { viewModel.removeSubtasks(at: offsets) }
+            }
+
+            if isAddingSubtask {
+                addSubtaskField
+            }
+        } header: {
+            subtaskHeader
+        } footer: {
+            if viewModel.subtasks.isEmpty && !isAddingSubtask {
+                Text("Add your subtasks here.")
+            } else if !viewModel.subtasks.isEmpty {
+                Text("Tap to toggle complete or incomplete")
+            }
+        }
+    }
+    
+    private var subtaskHeader: some View {
+        HStack(spacing: 8) {
+            Text("SUBTASKS")
+
+            if !viewModel.subtasks.isEmpty {
+                Text("\(viewModel.completedSubtaskCount)/\(viewModel.subtasks.count)")
+                    .font(.caption.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(Color(.tertiarySystemFill)))
+            }
+
+            Spacer(minLength: 0)
+
+            Button {
+                withAnimation { toggleAddField() }
+            } label: {
+                Image(systemName: isAddingSubtask ? "xmark" : "plus")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(width: 50, height: 40, alignment: .trailing)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.tint)
+        }
+        .textCase(nil)
+    }
+
+    private var addSubtaskField: some View {
+        HStack(spacing: 12) {
+            TextField("New subtask", text: $viewModel.newSubtaskTitle)
+                .focused($newSubtaskFocused)
+                .submitLabel(.done)
+                .onSubmit(addSubtask)
+
+            Button("Add", action: addSubtask)
+                .buttonStyle(.borderless)
+                .font(.subheadline.weight(.semibold))
+                .disabled(!viewModel.canAddSubtask)
+        }
+    }
+
+    private func toggleAddField() {
+        if isAddingSubtask {
+            closeAddField()
+        } else {
+            isAddingSubtask = true
+            newSubtaskFocused = true
+        }
+    }
+
+    private func closeAddField() {
+        isAddingSubtask = false
+        newSubtaskFocused = false
+        viewModel.newSubtaskTitle = ""
+    }
+
+    private func addSubtask() {
+        withAnimation {
+            if viewModel.canAddSubtask {
+                viewModel.addSubtask()
+            }
+            closeAddField()
+        }
+    }
+}
+
+private struct SubtaskRow: View {
+    let subtask: SubTask
+    let onToggle: () -> Void
+
+    var body: some View {
+        Button(action: onToggle) {
+            HStack(spacing: 12) {
+                Image(systemName: subtask.isCompleted ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(subtask.isCompleted ? Color.accentColor : Color.secondary)
+                    .contentTransition(.symbolEffect(.replace))
+
+                Text(subtask.title)
+                    .font(.subheadline)
+                    .strikethrough(subtask.isCompleted, color: .secondary)
+                    .foregroundStyle(subtask.isCompleted ? .secondary : .primary)
+                    .multilineTextAlignment(.leading)
+
+                Spacer(minLength: 0)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }

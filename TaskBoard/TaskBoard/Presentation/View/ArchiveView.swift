@@ -16,6 +16,12 @@ struct ArchiveView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                if let banner = viewModel.banner {
+                    MessageBanner(message: banner) {
+                        withAnimation { viewModel.banner = nil }
+                    }
+                }
+                
                 content
             }
             .navigationTitle("Archived")
@@ -58,6 +64,7 @@ struct ArchiveView: View {
             Section {
                 ForEach(viewModel.tasks) { task in
                     ArchivedRowView(task: task)
+                        .listRowInsets(EdgeInsets(top: 10, leading: 15, bottom: 10, trailing: 15))
                         .contextMenu {
                             Button("Restore to \(task.status.displayName)", systemImage: "arrow.uturn.backward") {
                                 withAnimation { viewModel.restore(id: task.id) }
@@ -70,6 +77,8 @@ struct ArchiveView: View {
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .listRowSpacing(10)
     }
     
     private var emptyStateView: some View {
@@ -110,31 +119,40 @@ private struct ArchivedRowView: View {
             VStack(alignment: .leading, spacing: 5) {
                 Text(task.title)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(3)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
+                    .lineLimit(2)
+
                 if !task.details.isEmpty {
                     Text(task.details)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
                 HStack(spacing: 5) {
                     Label(task.status.displayName, systemImage: task.status.systemImage)
                         .font(.caption2.weight(.medium))
                         .foregroundStyle(task.status.tint)
+                        .lineLimit(1)
                     
+                    Spacer(minLength: 6)
+
+                    if task.hasSubtasks {
+                        Label("\(task.completedSubtaskCount)/\(task.subtasks.count)", systemImage: "checklist")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+
+                        Text(".")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+
                     Text("Archived \(RelativeTime.string(from: task.updatedAt))")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
             }
-            
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 2)
     }
