@@ -20,7 +20,7 @@ final class TaskEntity {
     var orderIndex: Int
     var syncStateRaw: String
     var isArchived: Bool = false
-    var subtasks: [SubTask]
+    var subtasks: [SubTask] = []
     var activity: [ActivityEntry] = []
     
     init(id: String, title: String, details: String, statusRaw: String, createdAt: Date, updatedAt: Date, orderIndex: Int, syncStateRaw: String, isArchived: Bool = false, subtasks: [SubTask] = [], activity: [ActivityEntry] = []) {

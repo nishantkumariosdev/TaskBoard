@@ -16,7 +16,7 @@ struct RemoteTaskDTO: Codable, Sendable {
     let orderIndex: Int
     let createdAt: Double
     let updatedAt: Double
-    let isArchived: Bool
+    let isArchived: Bool?
     let subtasks: [RemoteSubTaskDTO]?
     let activity: [RemoteActivityDTO]?
 }
@@ -72,7 +72,7 @@ extension RemoteTaskDTO {
             createdAt: Date(millisecondsSince1970: createdAt),
             updatedAt: Date(millisecondsSince1970: updatedAt),
             orderIndex: orderIndex,
-            isArchived: isArchived,
+            isArchived: isArchived ?? false,
             subtasks: (subtasks ?? []).map { $0.toDomain() },
             activity: (activity ?? []).compactMap { $0.toDomain() }
         )
